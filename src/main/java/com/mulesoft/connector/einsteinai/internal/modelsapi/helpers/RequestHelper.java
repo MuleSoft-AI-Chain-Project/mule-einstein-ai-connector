@@ -2,7 +2,7 @@ package com.mulesoft.connector.einsteinai.internal.modelsapi.helpers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mulesoft.connector.einsteinai.internal.connection.EinsteinConnection;
-import com.mulesoft.connector.einsteinai.internal.error.AgentforceErrorType;
+import com.mulesoft.connector.einsteinai.internal.error.EinsteinErrorType;
 import com.mulesoft.connector.einsteinai.internal.modelsapi.dto.EinsteinEmbeddingResponseDTO;
 import com.mulesoft.connector.einsteinai.internal.modelsapi.models.ParamsEmbeddingDocumentDetails;
 import com.mulesoft.connector.einsteinai.internal.modelsapi.models.ParamsEmbeddingModelDetails;
@@ -48,20 +48,20 @@ public class RequestHelper {
   public InputStream executeGenerateText(String prompt, ParamsModelDetails paramDetails)
       throws IOException {
     String payload = constructPayload(prompt, paramDetails.getLocale(), paramDetails.getProbability());
-    return executeAgentforceRequest(payload, paramDetails.getModelApiName(), URI_MODELS_API_GENERATIONS);
+    return executeEinsteinRequest(payload, paramDetails.getModelApiName(), URI_MODELS_API_GENERATIONS);
   }
 
   public InputStream generateChatFromMessages(String messages, ParamsModelDetails paramDetails)
       throws IOException {
     String payload = constructPayloadWithMessages(messages, paramDetails);
-    return executeAgentforceRequest(payload, paramDetails.getModelApiName(),
-                                    URI_MODELS_API_CHAT_GENERATIONS);
+    return executeEinsteinRequest(payload, paramDetails.getModelApiName(),
+                                  URI_MODELS_API_CHAT_GENERATIONS);
   }
 
   public InputStream generateEmbeddingFromText(String text, ParamsEmbeddingModelDetails paramDetails)
       throws IOException {
     String payload = constructEmbeddingJsonPayload(text);
-    return executeAgentforceRequest(payload, paramDetails.getModelApiName(), URI_MODELS_API_EMBEDDINGS);
+    return executeEinsteinRequest(payload, paramDetails.getModelApiName(), URI_MODELS_API_EMBEDDINGS);
   }
 
   public JSONArray generateEmbeddingFromFileInputStream(InputStream inputStream,
@@ -86,7 +86,7 @@ public class RequestHelper {
   public InputStream executeRAG(String text, RAGParamsModelDetails paramDetails)
       throws IOException {
     String payload = constructPayload(text, paramDetails.getLocale(), paramDetails.getProbability());
-    return executeAgentforceRequest(payload, paramDetails.getModelApiName(), URI_MODELS_API_GENERATIONS);
+    return executeEinsteinRequest(payload, paramDetails.getModelApiName(), URI_MODELS_API_GENERATIONS);
   }
 
   public InputStream executeTools(String originalPrompt, String prompt, InputStream inputStream, ParamsModelDetails paramDetails)
@@ -95,8 +95,8 @@ public class RequestHelper {
     String payloadOptional = constructPayload(originalPrompt, paramDetails.getLocale(), paramDetails.getProbability());
 
     String intermediateAnswer =
-        readResponseStream(executeAgentforceRequest(payload, paramDetails.getModelApiName(),
-                                                    URI_MODELS_API_GENERATIONS));
+        readResponseStream(executeEinsteinRequest(payload, paramDetails.getModelApiName(),
+                                                  URI_MODELS_API_GENERATIONS));
 
     List<String> urls = extractUrls(intermediateAnswer);
 
@@ -109,10 +109,10 @@ public class RequestHelper {
       String response = getAttributes(urls.get(0), inputStream, extractPayload(ePayload));
       String finalPayload = constructPayload("data: " + response + ", question: " + originalPrompt, paramDetails.getLocale(),
                                              paramDetails.getProbability());
-      return executeAgentforceRequest(finalPayload, paramDetails.getModelApiName(), URI_MODELS_API_GENERATIONS);
+      return executeEinsteinRequest(finalPayload, paramDetails.getModelApiName(), URI_MODELS_API_GENERATIONS);
 
     } else {
-      return executeAgentforceRequest(payloadOptional, paramDetails.getModelApiName(), URI_MODELS_API_GENERATIONS);
+      return executeEinsteinRequest(payloadOptional, paramDetails.getModelApiName(), URI_MODELS_API_GENERATIONS);
     }
   }
 
@@ -154,7 +154,7 @@ public class RequestHelper {
     for (String text : corpus) {
       if (text != null && !text.isEmpty()) {
         String corpusBody = constructEmbeddingJsonPayload(text);
-        try (InputStream embeddingResponse = executeAgentforceRequest(corpusBody, modelName, URI_MODELS_API_EMBEDDINGS)) {
+        try (InputStream embeddingResponse = executeEinsteinRequest(corpusBody, modelName, URI_MODELS_API_EMBEDDINGS)) {
           EinsteinEmbeddingResponseDTO embeddingResponseDTO =
               new ObjectMapper().readValue(embeddingResponse, EinsteinEmbeddingResponseDTO.class);
           corpusEmbeddings.add(embeddingResponseDTO.getEmbeddings().get(0).getEmbeddings());
@@ -174,13 +174,13 @@ public class RequestHelper {
       String batchJsonPayload = constructEmbeddingJsonPayload(batch);
 
       // Execute the request and process the response
-      try (InputStream embeddingResponse = executeAgentforceRequest(batchJsonPayload, modelName, URI_MODELS_API_EMBEDDINGS)) {
+      try (InputStream embeddingResponse = executeEinsteinRequest(batchJsonPayload, modelName, URI_MODELS_API_EMBEDDINGS)) {
         // Parse the embedding response and add it to allEmbeddings
         EinsteinEmbeddingResponseDTO embeddingResponseDTO =
             new ObjectMapper().readValue(embeddingResponse, EinsteinEmbeddingResponseDTO.class);
         allEmbeddings.add(embeddingResponseDTO.getEmbeddings().get(0).getEmbeddings());
       } catch (IOException e) {
-        throw new ModuleException("Error fetching embeddings", AgentforceErrorType.MODELS_API_ERROR, e);
+        throw new ModuleException("Error fetching embeddings", EinsteinErrorType.MODELS_API_ERROR, e);
       }
     }
     return allEmbeddings;
@@ -189,7 +189,7 @@ public class RequestHelper {
   private List<Double> getQueryEmbedding(String body, String modelName)
       throws IOException {
 
-    InputStream embeddingResponse = executeAgentforceRequest(body, modelName, URI_MODELS_API_EMBEDDINGS);
+    InputStream embeddingResponse = executeEinsteinRequest(body, modelName, URI_MODELS_API_EMBEDDINGS);
 
     EinsteinEmbeddingResponseDTO embeddingResponseDTO =
         new ObjectMapper().readValue(embeddingResponse, EinsteinEmbeddingResponseDTO.class);
@@ -230,17 +230,17 @@ public class RequestHelper {
     return Collections.emptyList();
   }
 
-  private InputStream executeAgentforceRequest(String payload, String modelName, String resource)
+  private InputStream executeEinsteinRequest(String payload, String modelName, String resource)
       throws IOException {
 
     String urlString = einsteinConnection.getApiInstanceUrl() + URI_MODELS_API + modelName + resource;
-    log.debug("Agentforce Request URL: {}", urlString);
+    log.debug("Einstein Request URL: {}", urlString);
 
     HttpURLConnection httpConnection = createURLConnection(urlString, HTTP_METHOD_POST);
     addConnectionHeaders(httpConnection, einsteinConnection.getAccessToken());
     writePayloadToConnStream(httpConnection, payload);
 
-    return handleHttpResponse(httpConnection, AgentforceErrorType.MODELS_API_ERROR);
+    return handleHttpResponse(httpConnection, EinsteinErrorType.MODELS_API_ERROR);
   }
 
   private String getFileTypeContextFromFile(InputStream inputStream, String fileType)

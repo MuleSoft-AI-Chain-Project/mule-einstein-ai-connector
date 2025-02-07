@@ -14,7 +14,7 @@ http://www.mulesoft.org/schema/mule/ms-einstein http://www.mulesoft.org/schema/m
                 memoryPath='${app.home}/embeddingaddfiletest/testdb'
                 memoryName="vt"
                 keepLastMessages="10"
-                config-ref="Agentforce_Config">
+                config-ref="Einstein_Config">
             <ms-einstein:prompt>#[vars.prompt]</ms-einstein:prompt>
         </ms-einstein:chat-answer-prompt-with-memory>
     </flow>
@@ -27,7 +27,7 @@ http://www.mulesoft.org/schema/mule/ms-einstein http://www.mulesoft.org/schema/m
                 memoryPath='${app.home}/embeddingaddfiletest/testdb'
                 memoryName="vt"
                 keepLastMessages="10"
-                config-ref="Agentforce_Config">
+                config-ref="Einstein_Config">
             <ms-einstein:prompt>#[vars.prompt]</ms-einstein:prompt>
         </ms-einstein:chat-answer-prompt-with-memory>
     </flow>

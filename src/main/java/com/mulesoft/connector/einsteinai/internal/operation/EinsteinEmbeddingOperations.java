@@ -25,7 +25,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.InputStream;
 
-import static com.mulesoft.connector.einsteinai.internal.error.AgentforceErrorType.*;
+import static com.mulesoft.connector.einsteinai.internal.error.EinsteinErrorType.*;
 import static com.mulesoft.connector.einsteinai.internal.modelsapi.helpers.ConstantUtil.MODELAPI_OPENAI_ADA_002;
 import static org.mule.runtime.extension.api.annotation.param.MediaType.APPLICATION_JSON;
 
@@ -43,7 +43,7 @@ public class EinsteinEmbeddingOperations {
   @MediaType(value = APPLICATION_JSON, strict = false)
   @Alias("EMBEDDING-generate-from-text")
   @Throws(EmbeddingErrorTypeProvider.class)
-  @OutputJsonType(schema = "api/response/AgentForceEmbeddingResponse.json")
+  @OutputJsonType(schema = "api/response/EinsteinEmbeddingResponse.json")
   public Result<InputStream, ResponseParameters> generateEmbeddingFromText(
                                                                            @Connection EinsteinConnection connection,
                                                                            @Content String text,
@@ -53,7 +53,7 @@ public class EinsteinEmbeddingOperations {
     try {
       InputStream responseStream = connection.getRequestHelper().generateEmbeddingFromText(text, paramDetails);
 
-      return ResponseHelper.createAgentforceEmbeddingResponse(responseStream);
+      return ResponseHelper.createEinsteinEmbeddingResponse(responseStream);
     } catch (Exception e) {
       throw new ModuleException("Error while executing embedding generate from text operation",
                                 EMBEDDING_OPERATIONS_FAILURE, e);
@@ -66,7 +66,7 @@ public class EinsteinEmbeddingOperations {
   @MediaType(value = APPLICATION_JSON, strict = false)
   @Alias("EMBEDDING-generate-from-file")
   @Throws(EmbeddingErrorTypeProvider.class)
-  @OutputJsonType(schema = "api/response/AgentForceFileEmbeddingResponse.json")
+  @OutputJsonType(schema = "api/response/EinsteinFileEmbeddingResponse.json")
   public Result<InputStream, Void> generateEmbeddingFromFile(@Connection EinsteinConnection connection,
                                                              @Content InputStream inputStream,
                                                              @ParameterGroup(
@@ -78,7 +78,7 @@ public class EinsteinEmbeddingOperations {
       JSONObject jsonObject = new JSONObject();
       jsonObject.put("result", response);
 
-      return ResponseHelper.createAgentforceDefaultResponse(jsonObject.toString());
+      return ResponseHelper.createEinsteinDefaultResponse(jsonObject.toString());
     } catch (Exception e) {
       throw new ModuleException("Error while executing embedding generate from file operation",
                                 EMBEDDING_OPERATIONS_FAILURE, e);
@@ -91,7 +91,7 @@ public class EinsteinEmbeddingOperations {
   @MediaType(value = APPLICATION_JSON, strict = false)
   @Alias("EMBEDDING-adhoc-file-query")
   @Throws(EmbeddingErrorTypeProvider.class)
-  @OutputJsonType(schema = "api/response/AgentForceFileEmbeddingResponse.json")
+  @OutputJsonType(schema = "api/response/EinsteinFileEmbeddingResponse.json")
   public Result<InputStream, Void> queryEmbeddingOnFiles(@Connection EinsteinConnection connection, @Content String prompt,
                                                          @Content InputStream inputStream,
                                                          @ParameterGroup(
@@ -105,7 +105,7 @@ public class EinsteinEmbeddingOperations {
 
       JSONObject jsonObject = new JSONObject();
       jsonObject.put("result", response);
-      return ResponseHelper.createAgentforceDefaultResponse(jsonObject.toString());
+      return ResponseHelper.createEinsteinDefaultResponse(jsonObject.toString());
     } catch (Exception e) {
       throw new ModuleException("Error while generating the chat, for prompt " + prompt, EMBEDDING_OPERATIONS_FAILURE, e);
     }
@@ -117,7 +117,7 @@ public class EinsteinEmbeddingOperations {
   @MediaType(value = APPLICATION_JSON, strict = false)
   @Alias("RAG-adhoc-load-document")
   @Throws(EmbeddingErrorTypeProvider.class)
-  @OutputJsonType(schema = "api/response/AgentForceOperationResponse.json")
+  @OutputJsonType(schema = "api/response/EinsteinOperationResponse.json")
   public Result<InputStream, EinsteinResponseAttributes> ragOnFiles(@Connection EinsteinConnection connection,
                                                                     @Content String prompt,
                                                                     @Content InputStream inputStream,
@@ -131,7 +131,7 @@ public class EinsteinEmbeddingOperations {
       InputStream responseStream = connection.getRequestHelper().executeRAG("data: " + content + ", question: " + prompt,
                                                                             paramDetails);
 
-      return ResponseHelper.createAgentforceFormattedResponse(responseStream);
+      return ResponseHelper.createEinsteinFormattedResponse(responseStream);
     } catch (Exception e) {
       throw new ModuleException("Error while doing rag adhoc load document for prompt " + prompt, RAG_FAILURE, e);
     }
@@ -143,7 +143,7 @@ public class EinsteinEmbeddingOperations {
   @MediaType(value = APPLICATION_JSON, strict = false)
   @Alias("Tools-use-ai-service")
   @Throws(EmbeddingErrorTypeProvider.class)
-  @OutputJsonType(schema = "api/response/AgentForceOperationResponse.json")
+  @OutputJsonType(schema = "api/response/EinsteinOperationResponse.json")
   public Result<InputStream, EinsteinResponseAttributes> executeTools(@Connection EinsteinConnection connection,
                                                                       @Content String prompt,
                                                                       @Content InputStream inputStream,
@@ -160,7 +160,7 @@ public class EinsteinEmbeddingOperations {
           connection.getRequestHelper().executeTools(prompt, "data: " + content + ", question: " + prompt,
                                                      inputStream, paramDetails);
 
-      return ResponseHelper.createAgentforceFormattedResponse(responseStream);
+      return ResponseHelper.createEinsteinFormattedResponse(responseStream);
     } catch (Exception e) {
       throw new ModuleException("Error while executing AI service tools" + ", for prompt "
           + prompt, TOOLS_OPERATION_FAILURE, e);

@@ -1,6 +1,6 @@
 package com.mulesoft.connector.einsteinai.internal.helpers;
 
-import com.mulesoft.connector.einsteinai.internal.error.AgentforceErrorType;
+import com.mulesoft.connector.einsteinai.internal.error.EinsteinErrorType;
 import org.mule.runtime.extension.api.connectivity.oauth.AccessTokenExpiredException;
 import org.mule.runtime.extension.api.exception.ModuleException;
 import org.slf4j.Logger;
@@ -58,18 +58,18 @@ public class HttpRequestHelper {
       return errorResponse.toString();
     } catch (IOException e) {
       log.debug("Error reading error stream", e);
-      return "Unable to get response from Agentforce. Could not read reading error details as well.";
+      return "Unable to get response from Einstein. Could not read reading error details as well.";
     }
   }
 
-  public static InputStream handleHttpResponse(HttpURLConnection httpConnection, AgentforceErrorType errorType)
+  public static InputStream handleHttpResponse(HttpURLConnection httpConnection, EinsteinErrorType errorType)
       throws IOException {
     int responseCode = httpConnection.getResponseCode();
 
     if (responseCode == HttpURLConnection.HTTP_OK) {
       if (httpConnection.getInputStream() == null) {
         throw new ModuleException(
-                                  "Error: No response received from Agentforce", errorType);
+                                  "Error: No response received from Einstein", errorType);
       }
       return httpConnection.getInputStream();
     } else if (responseCode == HttpURLConnection.HTTP_UNAUTHORIZED) {

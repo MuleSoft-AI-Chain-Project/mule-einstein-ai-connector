@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.InputStream;
 
-import static com.mulesoft.connector.einsteinai.internal.error.AgentforceErrorType.CHAT_FAILURE;
+import static com.mulesoft.connector.einsteinai.internal.error.EinsteinErrorType.CHAT_FAILURE;
 import static org.mule.runtime.extension.api.annotation.param.MediaType.APPLICATION_JSON;
 
 /**
@@ -37,7 +37,7 @@ public class EinsteinGenerationOperations {
   @MediaType(value = APPLICATION_JSON, strict = false)
   @Alias("AGENT-define-prompt-template")
   @Throws(ChatErrorTypeProvider.class)
-  @OutputJsonType(schema = "api/response/AgentForceOperationResponse.json")
+  @OutputJsonType(schema = "api/response/EinsteinOperationResponse.json")
   public Result<InputStream, EinsteinResponseAttributes> definePromptTemplate(@Connection EinsteinConnection connection,
                                                                               @Content(primary = true) String template,
                                                                               @Content String instructions,
@@ -49,7 +49,7 @@ public class EinsteinGenerationOperations {
       String finalPromptTemplate = PromptTemplateHelper.definePromptTemplate(template, instructions, dataset);
       InputStream responseStream = connection.getRequestHelper().executeGenerateText(finalPromptTemplate, paramDetails);
 
-      return ResponseHelper.createAgentforceFormattedResponse(responseStream);
+      return ResponseHelper.createEinsteinFormattedResponse(responseStream);
     } catch (Exception e) {
       throw new ModuleException("Error while generating prompt from template " + template + ", instructions "
           + instructions + ", dataset " + dataset, CHAT_FAILURE, e);
@@ -62,7 +62,7 @@ public class EinsteinGenerationOperations {
   @MediaType(value = APPLICATION_JSON, strict = false)
   @Alias("CHAT-answer-prompt")
   @Throws(ChatErrorTypeProvider.class)
-  @OutputJsonType(schema = "api/response/AgentForceOperationResponse.json")
+  @OutputJsonType(schema = "api/response/EinsteinOperationResponse.json")
   public Result<InputStream, EinsteinResponseAttributes> generateText(@Connection EinsteinConnection connection,
                                                                       @Content String prompt,
                                                                       @ParameterGroup(
@@ -71,7 +71,7 @@ public class EinsteinGenerationOperations {
     try {
       InputStream responseStream = connection.getRequestHelper().executeGenerateText(prompt, paramDetails);
 
-      return ResponseHelper.createAgentforceFormattedResponse(responseStream);
+      return ResponseHelper.createEinsteinFormattedResponse(responseStream);
     } catch (Exception e) {
       throw new ModuleException("Error while generating text for prompt " + prompt, CHAT_FAILURE, e);
     }
@@ -83,7 +83,7 @@ public class EinsteinGenerationOperations {
   @MediaType(value = APPLICATION_JSON, strict = false)
   @Alias("CHAT-answer-prompt-with-memory")
   @Throws(ChatErrorTypeProvider.class)
-  @OutputJsonType(schema = "api/response/AgentForceOperationResponse.json")
+  @OutputJsonType(schema = "api/response/EinsteinOperationResponse.json")
   public Result<InputStream, EinsteinResponseAttributes> generateTextMemory(@Connection EinsteinConnection connection,
                                                                             @Content(primary = true) String prompt,
                                                                             String memoryPath,
@@ -98,7 +98,7 @@ public class EinsteinGenerationOperations {
           connection.getChatMemoryHelper().chatWithMemory(prompt, memoryPath, memoryName, keepLastMessages,
                                                           paramDetails);
 
-      return ResponseHelper.createAgentforceFormattedResponse(responseStream);
+      return ResponseHelper.createEinsteinFormattedResponse(responseStream);
     } catch (Exception e) {
       throw new ModuleException("Error while generating text from memory path " + memoryPath + ", memory name "
           + memoryName + ", for prompt " + prompt, CHAT_FAILURE, e);
@@ -111,7 +111,7 @@ public class EinsteinGenerationOperations {
   @MediaType(value = APPLICATION_JSON, strict = false)
   @Alias("CHAT-generate-from-messages")
   @Throws(ChatErrorTypeProvider.class)
-  @OutputJsonType(schema = "api/response/AgentForceChatFromMessagesResponse.json")
+  @OutputJsonType(schema = "api/response/EinsteinChatFromMessagesResponse.json")
   public Result<InputStream, ResponseParameters> generateChatFromMessages(@Connection EinsteinConnection connection,
                                                                           @Content String messages,
                                                                           @ParameterGroup(
@@ -121,7 +121,7 @@ public class EinsteinGenerationOperations {
 
       InputStream responseStream = connection.getRequestHelper().generateChatFromMessages(messages, paramDetails);
 
-      return ResponseHelper.createAgentforceChatFromMessagesResponse(responseStream);
+      return ResponseHelper.createEinsteinChatFromMessagesResponse(responseStream);
     } catch (Exception e) {
       throw new ModuleException("Error while generating the chat from messages " + messages, CHAT_FAILURE, e);
     }

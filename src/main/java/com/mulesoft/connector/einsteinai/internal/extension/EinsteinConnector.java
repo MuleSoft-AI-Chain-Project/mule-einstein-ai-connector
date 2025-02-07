@@ -1,7 +1,7 @@
 package com.mulesoft.connector.einsteinai.internal.extension;
 
 import com.mulesoft.connector.einsteinai.internal.connection.provider.CustomOauthClientCredentialsConnectionProvider;
-import com.mulesoft.connector.einsteinai.internal.error.AgentforceErrorType;
+import com.mulesoft.connector.einsteinai.internal.error.EinsteinErrorType;
 import com.mulesoft.connector.einsteinai.internal.operation.EinsteinEmbeddingOperations;
 import com.mulesoft.connector.einsteinai.internal.operation.EinsteinGenerationOperations;
 import org.mule.runtime.api.meta.Category;
@@ -21,7 +21,7 @@ import static org.mule.sdk.api.meta.JavaVersion.*;
  */
 @Xml(prefix = "ms-einstein")
 @Extension(name = "Einstein", category = Category.SELECT)
-@ErrorTypes(AgentforceErrorType.class)
+@ErrorTypes(EinsteinErrorType.class)
 @Operations({EinsteinEmbeddingOperations.class,
     EinsteinGenerationOperations.class})
 @ConnectionProviders(CustomOauthClientCredentialsConnectionProvider.class)

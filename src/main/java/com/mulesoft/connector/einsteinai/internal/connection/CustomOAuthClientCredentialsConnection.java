@@ -38,7 +38,7 @@ public class CustomOAuthClientCredentialsConnection implements EinsteinConnectio
     /*
      * try { logger.info("Inside CustomOAuthClientCredentialsConnection validate, salesforceOrg {}", salesforceOrgUrl);
      * botRequestHelper.getAgentList(); } catch (IOException e) { throw new ModuleException("Unable to validate credentials",
-     * AgentforceErrorType.INVALID_CONNECTION, e); }
+     * EinsteinErrorType.INVALID_CONNECTION, e); }
      */
   }
 

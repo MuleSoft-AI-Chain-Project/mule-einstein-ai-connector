@@ -1,10 +1,9 @@
-package com.mulesoft.connector.agentforce.internal.operation;
+package com.mulesoft.connector.einsteinai.internal.operation;
 
 import com.mulesoft.connector.einsteinai.internal.connection.EinsteinConnection;
 import com.mulesoft.connector.einsteinai.internal.modelsapi.helpers.RequestHelper;
 import com.mulesoft.connector.einsteinai.internal.modelsapi.helpers.chatmemory.ChatMemoryHelper;
 import com.mulesoft.connector.einsteinai.internal.modelsapi.models.ParamsModelDetails;
-import com.mulesoft.connector.einsteinai.internal.operation.EinsteinGenerationOperations;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;
@@ -17,7 +16,7 @@ import org.mule.runtime.extension.api.exception.ModuleException;
 
 import java.io.IOException;
 
-import static com.mulesoft.connector.einsteinai.internal.error.AgentforceErrorType.CHAT_FAILURE;
+import static com.mulesoft.connector.einsteinai.internal.error.EinsteinErrorType.CHAT_FAILURE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;

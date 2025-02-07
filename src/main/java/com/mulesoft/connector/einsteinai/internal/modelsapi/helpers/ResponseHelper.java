@@ -24,7 +24,7 @@ public class ResponseHelper {
 
   private static final ObjectMapper objectMapper = new ObjectMapper();
 
-  public static Result<InputStream, Void> createAgentforceDefaultResponse(String response) {
+  public static Result<InputStream, Void> createEinsteinDefaultResponse(String response) {
 
     return Result.<InputStream, Void>builder()
         .output(toInputStream(response, StandardCharsets.UTF_8))
@@ -32,7 +32,7 @@ public class ResponseHelper {
         .build();
   }
 
-  public static Result<InputStream, EinsteinResponseAttributes> createAgentforceFormattedResponse(InputStream responseStream)
+  public static Result<InputStream, EinsteinResponseAttributes> createEinsteinFormattedResponse(InputStream responseStream)
       throws IOException {
 
     EinsteinGenerationResponseDTO responseDTO = objectMapper.readValue(responseStream, EinsteinGenerationResponseDTO.class);
@@ -51,7 +51,7 @@ public class ResponseHelper {
         .build();
   }
 
-  public static Result<InputStream, ResponseParameters> createAgentforceChatFromMessagesResponse(InputStream responseStream)
+  public static Result<InputStream, ResponseParameters> createEinsteinChatFromMessagesResponse(InputStream responseStream)
       throws IOException {
 
     EinsteinChatFromMessagesResponseDTO responseDTO =
@@ -68,7 +68,7 @@ public class ResponseHelper {
         .build();
   }
 
-  public static Result<InputStream, ResponseParameters> createAgentforceEmbeddingResponse(InputStream response)
+  public static Result<InputStream, ResponseParameters> createEinsteinEmbeddingResponse(InputStream response)
       throws IOException {
 
     EinsteinEmbeddingResponseDTO responseDTO = objectMapper.readValue(response, EinsteinEmbeddingResponseDTO.class);
