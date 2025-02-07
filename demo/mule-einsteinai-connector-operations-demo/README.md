@@ -1,13 +1,13 @@
-MuleSoft Agentforce Connector Demo
+MuleSoft Einstein AI Connector Demo
 ====================================
-Anypoint Studio demo for MuleSoft Agentforce Connector.
+Anypoint Studio demo for MuleSoft Einstein AI Connector.
 
 
 Prerequisites
 ---------------
 
 * Anypoint Studio 7 with Mule ESB 4.6.9 Runtime.
-* Mulesoft Agentforce Connector v1.0.0
+* Mulesoft Einstein AI Connector v1.0.0
 
 
 How to Run Sample

@@ -5,7 +5,7 @@
 
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.mulesoft.connectors</groupId>
-    <artifactId>mule4-einstein-connector</artifactId>
+    <artifactId>mule4-einstein-ai-connector</artifactId>
     <version>1.0.0-SNAPSHOT</version>
     <packaging>mule-extension</packaging>
     <name>Einstein Connector</name>
@@ -216,7 +216,7 @@
                 <configuration>
                     <argLines>
                         <argLine>
-                            -javaagent:${settings.localRepository}/org/jacoco/org.jacoco.agent/${jacoco.version}/org.jacoco.agent-${jacoco.version}-runtime.jar=destfile=${session.executionRootDirectory}/target/jacoco.exec,includes=com/mulesoft/connector/agentforce/**
+                            -javaagent:${settings.localRepository}/org/jacoco/org.jacoco.agent/${jacoco.version}/org.jacoco.agent-${jacoco.version}-runtime.jar=destfile=${session.executionRootDirectory}/target/jacoco.exec,includes=com/mulesoft/connector/einsteinai/**
                         </argLine>
                     </argLines>
                     <sharedLibraries>
