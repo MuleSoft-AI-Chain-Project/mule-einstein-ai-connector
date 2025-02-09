@@ -20,13 +20,13 @@ import static org.mule.sdk.api.meta.JavaVersion.*;
  * sources are going to be declared.
  */
 @Xml(prefix = "ms-einstein-ai")
-@Extension(name = "Einstein", category = Category.SELECT)
+@Extension(name = "Einstein AI", category = Category.SELECT)
 @ErrorTypes(EinsteinErrorType.class)
 @Operations({EinsteinEmbeddingOperations.class,
     EinsteinGenerationOperations.class})
 @ConnectionProviders(CustomOauthClientCredentialsConnectionProvider.class)
 @RequiresEnterpriseLicense(allowEvaluationLicense = true)
 @JavaVersionSupport({JAVA_8, JAVA_11, JAVA_17})
-public class EinsteinConnector {
+public class EinsteinAIConnector {
 
 }
