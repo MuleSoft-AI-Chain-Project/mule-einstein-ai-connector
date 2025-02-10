@@ -1,8 +1,11 @@
 package com.mulesoft.connector.einsteinai.internal.modelsapi.helpers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mulesoft.connector.einsteinai.api.metadata.EinsteinResponseAttributes;
+import com.mulesoft.connector.einsteinai.api.metadata.ResponseParameters;
 import com.mulesoft.connector.einsteinai.internal.connection.EinsteinConnection;
 import com.mulesoft.connector.einsteinai.internal.error.EinsteinErrorType;
+import com.mulesoft.connector.einsteinai.internal.helpers.ThrowingFunction;
 import com.mulesoft.connector.einsteinai.internal.modelsapi.dto.EinsteinEmbeddingResponseDTO;
 import com.mulesoft.connector.einsteinai.internal.modelsapi.models.ParamsEmbeddingDocumentDetails;
 import com.mulesoft.connector.einsteinai.internal.modelsapi.models.ParamsEmbeddingModelDetails;
@@ -18,7 +21,15 @@ import org.apache.tika.sax.BodyContentHandler;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.json.JSONTokener;
+import org.mule.runtime.api.util.MultiMap;
 import org.mule.runtime.extension.api.exception.ModuleException;
+import org.mule.runtime.extension.api.runtime.operation.Result;
+import org.mule.runtime.extension.api.runtime.process.CompletionCallback;
+import org.mule.runtime.http.api.domain.entity.EmptyHttpEntity;
+import org.mule.runtime.http.api.domain.entity.HttpEntity;
+import org.mule.runtime.http.api.domain.entity.InputStreamHttpEntity;
+import org.mule.runtime.http.api.domain.message.request.HttpRequest;
+import org.mule.runtime.http.api.domain.message.response.HttpResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
@@ -27,6 +38,7 @@ import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -45,23 +57,56 @@ public class RequestHelper {
     this.einsteinConnection = einsteinConnection;
   }
 
-  public InputStream executeGenerateText(String prompt, ParamsModelDetails paramDetails)
-      throws IOException {
+  public void executeGenerateText(String prompt, ParamsModelDetails paramDetails,
+                                  CompletionCallback<InputStream, EinsteinResponseAttributes> callback) {
+
     String payload = constructPayload(prompt, paramDetails.getLocale(), paramDetails.getProbability());
-    return executeEinsteinRequest(payload, paramDetails.getModelApiName(), URI_MODELS_API_GENERATIONS);
+    InputStreamHttpEntity payloadStream = new InputStreamHttpEntity(new ByteArrayInputStream(payload.getBytes()));
+
+    executeEinsteinRequest(payloadStream, paramDetails.getModelApiName(),
+                           HTTP_METHOD_POST, URI_MODELS_API_GENERATIONS, callback,
+                           ResponseHelper::createEinsteinFormattedResponse);
   }
 
-  public InputStream generateChatFromMessages(String messages, ParamsModelDetails paramDetails)
-      throws IOException {
+
+  public void generateChatFromMessages(String messages, ParamsModelDetails paramDetails,
+                                       CompletionCallback<InputStream, ResponseParameters> callback) {
+
     String payload = constructPayloadWithMessages(messages, paramDetails);
-    return executeEinsteinRequest(payload, paramDetails.getModelApiName(),
-                                  URI_MODELS_API_CHAT_GENERATIONS);
+    InputStreamHttpEntity payloadStream = new InputStreamHttpEntity(new ByteArrayInputStream(payload.getBytes()));
+
+    executeEinsteinRequest(payloadStream, paramDetails.getModelApiName(), HTTP_METHOD_POST,
+                           URI_MODELS_API_CHAT_GENERATIONS, callback, ResponseHelper::createEinsteinChatFromMessagesResponse);
   }
 
-  public InputStream generateEmbeddingFromText(String text, ParamsEmbeddingModelDetails paramDetails)
-      throws IOException {
+  public void generateEmbeddingFromText(String text, ParamsEmbeddingModelDetails paramDetails,
+                                        CompletionCallback<InputStream, ResponseParameters> callback) {
     String payload = constructEmbeddingJsonPayload(text);
-    return executeEinsteinRequest(payload, paramDetails.getModelApiName(), URI_MODELS_API_EMBEDDINGS);
+    InputStreamHttpEntity payloadStream = new InputStreamHttpEntity(new ByteArrayInputStream(payload.getBytes()));
+    executeEinsteinRequest(payloadStream, paramDetails.getModelApiName(), HTTP_METHOD_POST, URI_MODELS_API_EMBEDDINGS, callback,
+                           ResponseHelper::createEinsteinEmbeddingResponse);
+  }
+
+  private <A> void executeEinsteinRequest(InputStreamHttpEntity payload, String modelApiName, String httpMethod,
+                                          String uriModelsApiEmbeddings,
+                                          CompletionCallback<InputStream, A> callback,
+                                          ThrowingFunction<InputStream, Result<InputStream, A>> responseConverter) {
+
+    String urlString = einsteinConnection.getApiInstanceUrl() + URI_MODELS_API + modelApiName + uriModelsApiEmbeddings;
+    log.debug("Einstein Request URL: {}", urlString);
+
+    CompletableFuture<HttpResponse> completableFuture = einsteinConnection.getHttpClient().sendAsync(
+                                                                                                     buildRequest(urlString,
+                                                                                                                  einsteinConnection
+                                                                                                                      .getAccessToken(),
+                                                                                                                  httpMethod,
+                                                                                                                  payload != null
+                                                                                                                      ? payload
+                                                                                                                      : new EmptyHttpEntity()));
+
+    completableFuture
+        .whenComplete((response, exception) -> handleHttpResponse(response, exception, EinsteinErrorType.MODELS_API_ERROR,
+                                                                  callback, responseConverter));
   }
 
   public JSONArray generateEmbeddingFromFileInputStream(InputStream inputStream,
@@ -477,5 +522,23 @@ public class RequestHelper {
     conn.setRequestProperty(X_SFDC_APP_CONTEXT, EINSTEIN_GPT);
     conn.setRequestProperty(X_CLIENT_FEATURE_ID, AI_PLATFORM_MODELS_CONNECTED_APP);
     conn.setRequestProperty(CONTENT_TYPE_STRING, CONTENT_TYPE_APPLICATION_JSON);
+  }
+
+  private HttpRequest buildRequest(String url, String accessToken, String httpMethod, HttpEntity httpEntity) {
+    return HttpRequest.builder()
+        .uri(url)
+        .headers(addConnectionHeaders(accessToken))
+        .method(httpMethod)
+        .entity(httpEntity)
+        .build();
+  }
+
+  private MultiMap<String, String> addConnectionHeaders(String accessToken) {
+    MultiMap<String, String> multiMap = new MultiMap<>();
+    multiMap.put(AUTHORIZATION, "Bearer " + accessToken);
+    multiMap.put(X_SFDC_APP_CONTEXT, EINSTEIN_GPT);
+    multiMap.put(X_CLIENT_FEATURE_ID, AI_PLATFORM_MODELS_CONNECTED_APP);
+    multiMap.put(CONTENT_TYPE_STRING, CONTENT_TYPE_APPLICATION_JSON);
+    return multiMap;
   }
 }
