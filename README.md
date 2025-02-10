@@ -37,7 +37,7 @@ To use this connector, add the following dependency to your application's `pom.x
 ```xml
     <dependency>
        <groupId>io.github.mulesoft-ai-chain-project</groupId>
-       <artifactId>mule4-vectors-connector</artifactId>
+       <artifactId>mule4-einstein-ai-connector</artifactId>
        <version>{version}</version>
        <classifier>mule-plugin</classifier>
     </dependency>
@@ -51,7 +51,7 @@ Then add the following dependency to your application's `pom.xml`:
 ```xml
     <dependency>
         <groupId>com.mulesoft.connectors</groupId>
-        <artifactId>mule4-vectors-connector</artifactId>
+        <artifactId>mule4-einstein-ai-connector</artifactId>
         <version>{version}</version>
         <classifier>mule-plugin</classifier>
     </dependency>
