@@ -8,7 +8,7 @@
     <artifactId>mule4-einstein-ai-connector</artifactId>
     <version>1.0.0-SNAPSHOT</version>
     <packaging>mule-extension</packaging>
-    <name>Einstein Connector</name>
+    <name>Einstein AI Connector</name>
 
     <licenses>
         <license>
