@@ -70,21 +70,17 @@ public class ResponseHelper {
         .build();
   }
 
-  public static Result<InputStream, ResponseParameters> createEinsteinEmbeddingResponse(InputStream response) {
-    try {
-      EinsteinEmbeddingResponseDTO responseDTO = objectMapper.readValue(response, EinsteinEmbeddingResponseDTO.class);
-      JSONObject jsonObject = new JSONObject();
-      jsonObject.put("embeddings", responseDTO.getEmbeddings());
+  public static Result<InputStream, ResponseParameters> createEinsteinEmbeddingResponse(InputStream response) throws IOException {
+    EinsteinEmbeddingResponseDTO responseDTO = objectMapper.readValue(response, EinsteinEmbeddingResponseDTO.class);
+    JSONObject jsonObject = new JSONObject();
+    jsonObject.put("embeddings", responseDTO.getEmbeddings());
 
-      return Result.<InputStream, ResponseParameters>builder()
-          .output(toInputStream(jsonObject.toString(), StandardCharsets.UTF_8))
-          .attributes(mapEmbeddingResponseAttributes(responseDTO))
-          .attributesMediaType(MediaType.APPLICATION_JAVA)
-          .mediaType(MediaType.APPLICATION_JSON)
-          .build();
-    } catch (IOException e) {
-      throw new ModuleException("Error in parsing response ", EMBEDDING_OPERATIONS_FAILURE, e);
-    }
+    return Result.<InputStream, ResponseParameters>builder()
+        .output(toInputStream(jsonObject.toString(), StandardCharsets.UTF_8))
+        .attributes(mapEmbeddingResponseAttributes(responseDTO))
+        .attributesMediaType(MediaType.APPLICATION_JAVA)
+        .mediaType(MediaType.APPLICATION_JSON)
+        .build();
   }
 
   private static EinsteinResponseAttributes mapResponseAttributes(EinsteinGenerationResponseDTO responseDTO) {
