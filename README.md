@@ -19,14 +19,52 @@ MuleSoft Einstein AI Connector for Salesforce Einstein AI to interact with the _
 ### Installation
 To use this connector, add the following dependency to your application's `pom.xml`:
 
+```xml
+    <dependency>
+        <groupId>com.mulesoft.connectors</groupId>
+        <artifactId>mule4-einstein-ai-connector</artifactId>
+        <version>1.0.0</version>
+        <classifier>mule-plugin</classifier>		
+    </dependency>
 ```
-	<dependency>
-		<groupId>com.mulesoft.connectors</groupId>
-		<artifactId>mule4-einstein-ai-connector</artifactId>
-		<version>1.0.0</version>
-		<classifier>mule-plugin</classifier>		
-	</dependency>
+
+### Installation (Open Source Version)
+
+[![Maven Central](https://img.shields.io/maven-central/v/io.github.mulesoft-ai-chain-project/mule4-einstein-ai-connector)](https://central.sonatype.com/artifact/io.github.mulesoft-ai-chain-project/mule4-einstein-ai-connector/overview)
+
+#### Maven central dependency
+
+```xml
+    <dependency>
+       <groupId>io.github.mulesoft-ai-chain-project</groupId>
+       <artifactId>mule4-vectors-connector</artifactId>
+       <version>{version}</version>
+       <classifier>mule-plugin</classifier>
+    </dependency>
 ```
+
+#### Build and install locally
+
+To use this connector, first [build and install](https://mac-project.ai/docs/einstein-ai/getting-started) the connector into your local maven repository.
+Then add the following dependency to your application's `pom.xml`:
+
+```xml
+    <dependency>
+        <groupId>com.mulesoft.connectors</groupId>
+        <artifactId>mule4-vectors-connector</artifactId>
+        <version>{version}</version>
+        <classifier>mule-plugin</classifier>
+    </dependency>
+```
+
+#### Private Anypoint Exchange
+
+You can also make this connector available as an asset in your Anypoint Exchange.
+
+This process will require you to build the connector as above, but additionally you will need
+to make some changes to the `pom.xml`.  For this reason, we recommend you fork the repository.
+
+Then, follow the MuleSoft [documentation](https://docs.mulesoft.com/exchange/to-publish-assets-maven) to modify and publish the asset.
 
 ### Documentation
 - Check out MuleChain Einstein AI Connector Documentation on [mac-project.ai](https://mac-project.ai/docs/einstein-ai)
