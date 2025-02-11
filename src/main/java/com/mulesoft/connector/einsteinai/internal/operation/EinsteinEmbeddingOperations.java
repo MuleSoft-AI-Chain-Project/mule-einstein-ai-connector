@@ -54,8 +54,8 @@ public class EinsteinEmbeddingOperations {
     try {
       connection.getRequestHelper().generateEmbeddingFromText(text, paramDetails, callback);
     } catch (Exception e) {
-      throw new ModuleException("Error while executing embedding generate from text operation",
-                                EMBEDDING_OPERATIONS_FAILURE, e);
+      callback.error(new ModuleException("Error while executing embedding generate from text operation",
+                                         EMBEDDING_OPERATIONS_FAILURE, e));
     }
   }
 
