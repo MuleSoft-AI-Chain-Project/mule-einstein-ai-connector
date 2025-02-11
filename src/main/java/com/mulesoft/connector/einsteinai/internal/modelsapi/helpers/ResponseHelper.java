@@ -8,14 +8,12 @@ import com.mulesoft.connector.einsteinai.internal.modelsapi.dto.EinsteinEmbeddin
 import com.mulesoft.connector.einsteinai.internal.modelsapi.dto.EinsteinGenerationResponseDTO;
 import org.json.JSONObject;
 import org.mule.runtime.api.metadata.MediaType;
-import org.mule.runtime.extension.api.exception.ModuleException;
 import org.mule.runtime.extension.api.runtime.operation.Result;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
-import static com.mulesoft.connector.einsteinai.internal.error.EinsteinErrorType.EMBEDDING_OPERATIONS_FAILURE;
 import static org.apache.commons.io.IOUtils.toInputStream;
 
 public class ResponseHelper {

@@ -6,7 +6,6 @@ import com.mulesoft.connector.einsteinai.internal.modelsapi.models.ParamsModelDe
 import org.mule.runtime.extension.api.runtime.operation.Result;
 import org.mule.runtime.extension.api.runtime.process.CompletionCallback;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 

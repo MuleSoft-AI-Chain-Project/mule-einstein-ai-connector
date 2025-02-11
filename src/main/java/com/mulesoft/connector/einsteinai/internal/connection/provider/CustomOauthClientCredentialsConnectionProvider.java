@@ -3,7 +3,6 @@ package com.mulesoft.connector.einsteinai.internal.connection.provider;
 import com.mulesoft.connector.einsteinai.internal.connection.CustomOAuthClientCredentialsConnection;
 import com.mulesoft.connector.einsteinai.internal.connection.EinsteinConnection;
 import org.mule.runtime.api.connection.CachedConnectionProvider;
-import org.mule.runtime.api.exception.MuleException;
 import org.mule.runtime.api.lifecycle.Startable;
 import org.mule.runtime.api.lifecycle.Stoppable;
 import org.mule.runtime.extension.api.annotation.Alias;
