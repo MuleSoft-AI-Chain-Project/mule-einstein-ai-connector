@@ -20,6 +20,7 @@ import org.mule.runtime.extension.api.annotation.param.MediaType;
 import org.mule.runtime.extension.api.annotation.param.ParameterGroup;
 import org.mule.runtime.extension.api.exception.ModuleException;
 import org.mule.runtime.extension.api.runtime.operation.Result;
+import org.mule.runtime.extension.api.runtime.process.CompletionCallback;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,16 +45,14 @@ public class EinsteinEmbeddingOperations {
   @Alias("EMBEDDING-generate-from-text")
   @Throws(EmbeddingErrorTypeProvider.class)
   @OutputJsonType(schema = "api/response/EinsteinEmbeddingResponse.json")
-  public Result<InputStream, ResponseParameters> generateEmbeddingFromText(
-                                                                           @Connection EinsteinConnection connection,
-                                                                           @Content String text,
-                                                                           @ParameterGroup(
-                                                                               name = "Additional properties") ParamsEmbeddingModelDetails paramDetails) {
+  public void generateEmbeddingFromText(@Connection EinsteinConnection connection,
+                                        @Content String text,
+                                        @ParameterGroup(
+                                            name = "Additional properties") ParamsEmbeddingModelDetails paramDetails,
+                                        CompletionCallback<InputStream, ResponseParameters> callback) {
     log.info("Executing generate embedding from text operation.");
     try {
-      InputStream responseStream = connection.getRequestHelper().generateEmbeddingFromText(text, paramDetails);
-
-      return ResponseHelper.createEinsteinEmbeddingResponse(responseStream);
+      connection.getRequestHelper().generateEmbeddingFromText(text, paramDetails, callback);
     } catch (Exception e) {
       throw new ModuleException("Error while executing embedding generate from text operation",
                                 EMBEDDING_OPERATIONS_FAILURE, e);

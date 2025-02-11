@@ -1,9 +1,11 @@
 package com.mulesoft.connector.einsteinai.internal.modelsapi.helpers.chatmemory;
 
+import com.mulesoft.connector.einsteinai.api.metadata.EinsteinResponseAttributes;
 import com.mulesoft.connector.einsteinai.internal.modelsapi.helpers.RequestHelper;
 import com.mulesoft.connector.einsteinai.internal.modelsapi.models.ParamsModelDetails;
+import org.mule.runtime.extension.api.runtime.operation.Result;
+import org.mule.runtime.extension.api.runtime.process.CompletionCallback;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 
@@ -15,9 +17,9 @@ public class ChatMemoryHelper {
     this.requestHelper = requestHelper;
   }
 
-  public InputStream chatWithMemory(String prompt, String memoryPath, String memoryName, Integer keepLastMessages,
-                                    ParamsModelDetails parameters)
-      throws IOException {
+  public void chatWithMemory(String prompt, String memoryPath, String memoryName, Integer keepLastMessages,
+                             ParamsModelDetails parameters,
+                             CompletionCallback<InputStream, EinsteinResponseAttributes> callback) {
 
     // Chat memory initialization
     ChatMemoryUtil chatMemory = intializeChatMemory(memoryPath, memoryName);
@@ -27,11 +29,22 @@ public class ChatMemoryHelper {
     lastMessages.add(prompt);
     String memoryPrompt = formatMemoryPrompt(lastMessages);
 
-    InputStream response = requestHelper.executeGenerateText(memoryPrompt, parameters);
+    // Execute async text generation
+    requestHelper.executeGenerateText(memoryPrompt, parameters,
+                                      new CompletionCallback<InputStream, EinsteinResponseAttributes>() {
 
-    addMessageToMemory(chatMemory, prompt);
+                                        @Override
+                                        public void success(Result<InputStream, EinsteinResponseAttributes> result) {
+                                          // Add message to memory only after a successful response
+                                          addMessageToMemory(chatMemory, prompt);
+                                          callback.success(result);
+                                        }
 
-    return response;
+                                        @Override
+                                        public void error(Throwable throwable) {
+                                          callback.error(throwable);
+                                        }
+                                      });
   }
 
   private ChatMemoryUtil intializeChatMemory(String memoryPath, String memoryName) {

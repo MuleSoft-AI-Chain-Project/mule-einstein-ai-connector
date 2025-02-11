@@ -1,8 +1,11 @@
 package com.mulesoft.connector.einsteinai.internal.modelsapi.helpers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mulesoft.connector.einsteinai.api.metadata.EinsteinResponseAttributes;
+import com.mulesoft.connector.einsteinai.api.metadata.ResponseParameters;
 import com.mulesoft.connector.einsteinai.internal.connection.EinsteinConnection;
 import com.mulesoft.connector.einsteinai.internal.error.EinsteinErrorType;
+import com.mulesoft.connector.einsteinai.internal.helpers.ThrowingFunction;
 import com.mulesoft.connector.einsteinai.internal.modelsapi.dto.EinsteinEmbeddingResponseDTO;
 import com.mulesoft.connector.einsteinai.internal.modelsapi.models.ParamsEmbeddingDocumentDetails;
 import com.mulesoft.connector.einsteinai.internal.modelsapi.models.ParamsEmbeddingModelDetails;
@@ -18,23 +21,51 @@ import org.apache.tika.sax.BodyContentHandler;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.json.JSONTokener;
+import org.mule.runtime.api.util.MultiMap;
 import org.mule.runtime.extension.api.exception.ModuleException;
+import org.mule.runtime.extension.api.runtime.operation.Result;
+import org.mule.runtime.extension.api.runtime.process.CompletionCallback;
+import org.mule.runtime.http.api.domain.entity.EmptyHttpEntity;
+import org.mule.runtime.http.api.domain.entity.HttpEntity;
+import org.mule.runtime.http.api.domain.entity.InputStreamHttpEntity;
+import org.mule.runtime.http.api.domain.message.request.HttpRequest;
+import org.mule.runtime.http.api.domain.message.response.HttpResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
 
-import java.io.*;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.util.*;
+import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeoutException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static com.mulesoft.connector.einsteinai.internal.helpers.EinsteinConstantUtil.*;
-import static com.mulesoft.connector.einsteinai.internal.helpers.HttpRequestHelper.*;
-import static com.mulesoft.connector.einsteinai.internal.modelsapi.helpers.ConstantUtil.*;
+import static com.mulesoft.connector.einsteinai.internal.helpers.EinsteinConstantUtil.AUTHORIZATION;
+import static com.mulesoft.connector.einsteinai.internal.helpers.EinsteinConstantUtil.CONTENT_TYPE_APPLICATION_JSON;
+import static com.mulesoft.connector.einsteinai.internal.helpers.EinsteinConstantUtil.CONTENT_TYPE_STRING;
+import static com.mulesoft.connector.einsteinai.internal.helpers.EinsteinConstantUtil.HTTP_METHOD_POST;
+import static com.mulesoft.connector.einsteinai.internal.helpers.HttpRequestHelper.handleHttpResponse;
+import static com.mulesoft.connector.einsteinai.internal.helpers.HttpRequestHelper.handleHttpResponseForTools;
+import static com.mulesoft.connector.einsteinai.internal.helpers.HttpRequestHelper.readResponseStream;
+import static com.mulesoft.connector.einsteinai.internal.modelsapi.helpers.ConstantUtil.EINSTEIN_GPT;
+import static com.mulesoft.connector.einsteinai.internal.modelsapi.helpers.ConstantUtil.URI_MODELS_API;
+import static com.mulesoft.connector.einsteinai.internal.modelsapi.helpers.ConstantUtil.URI_MODELS_API_CHAT_GENERATIONS;
+import static com.mulesoft.connector.einsteinai.internal.modelsapi.helpers.ConstantUtil.URI_MODELS_API_EMBEDDINGS;
+import static com.mulesoft.connector.einsteinai.internal.modelsapi.helpers.ConstantUtil.URI_MODELS_API_GENERATIONS;
+import static com.mulesoft.connector.einsteinai.internal.modelsapi.helpers.ConstantUtil.X_CLIENT_FEATURE_ID;
+import static com.mulesoft.connector.einsteinai.internal.modelsapi.helpers.ConstantUtil.X_SFDC_APP_CONTEXT;
+import static com.mulesoft.connector.einsteinai.internal.modelsapi.helpers.ConstantUtil.AI_PLATFORM_MODELS_CONNECTED_APP;
 
 public class RequestHelper {
 
@@ -45,28 +76,61 @@ public class RequestHelper {
     this.einsteinConnection = einsteinConnection;
   }
 
-  public InputStream executeGenerateText(String prompt, ParamsModelDetails paramDetails)
-      throws IOException {
+  public void executeGenerateText(String prompt, ParamsModelDetails paramDetails,
+                                  CompletionCallback<InputStream, EinsteinResponseAttributes> callback) {
+
     String payload = constructPayload(prompt, paramDetails.getLocale(), paramDetails.getProbability());
-    return executeEinsteinRequest(payload, paramDetails.getModelApiName(), URI_MODELS_API_GENERATIONS);
+    InputStreamHttpEntity payloadStream = new InputStreamHttpEntity(new ByteArrayInputStream(payload.getBytes()));
+
+    executeEinsteinRequest(payloadStream, paramDetails.getModelApiName(),
+                           HTTP_METHOD_POST, URI_MODELS_API_GENERATIONS, callback,
+                           ResponseHelper::createEinsteinFormattedResponse);
   }
 
-  public InputStream generateChatFromMessages(String messages, ParamsModelDetails paramDetails)
-      throws IOException {
+
+  public void generateChatFromMessages(String messages, ParamsModelDetails paramDetails,
+                                       CompletionCallback<InputStream, ResponseParameters> callback) {
+
     String payload = constructPayloadWithMessages(messages, paramDetails);
-    return executeEinsteinRequest(payload, paramDetails.getModelApiName(),
-                                  URI_MODELS_API_CHAT_GENERATIONS);
+    InputStreamHttpEntity payloadStream = new InputStreamHttpEntity(new ByteArrayInputStream(payload.getBytes()));
+
+    executeEinsteinRequest(payloadStream, paramDetails.getModelApiName(), HTTP_METHOD_POST,
+                           URI_MODELS_API_CHAT_GENERATIONS, callback, ResponseHelper::createEinsteinChatFromMessagesResponse);
   }
 
-  public InputStream generateEmbeddingFromText(String text, ParamsEmbeddingModelDetails paramDetails)
-      throws IOException {
+  public void generateEmbeddingFromText(String text, ParamsEmbeddingModelDetails paramDetails,
+                                        CompletionCallback<InputStream, ResponseParameters> callback) {
     String payload = constructEmbeddingJsonPayload(text);
-    return executeEinsteinRequest(payload, paramDetails.getModelApiName(), URI_MODELS_API_EMBEDDINGS);
+    InputStreamHttpEntity payloadStream = new InputStreamHttpEntity(new ByteArrayInputStream(payload.getBytes()));
+    executeEinsteinRequest(payloadStream, paramDetails.getModelApiName(), HTTP_METHOD_POST, URI_MODELS_API_EMBEDDINGS, callback,
+                           ResponseHelper::createEinsteinEmbeddingResponse);
+  }
+
+  private <A> void executeEinsteinRequest(InputStreamHttpEntity payload, String modelApiName, String httpMethod,
+                                          String uriModelsApiEmbeddings,
+                                          CompletionCallback<InputStream, A> callback,
+                                          ThrowingFunction<InputStream, Result<InputStream, A>> responseConverter) {
+
+    String urlString = einsteinConnection.getApiInstanceUrl() + URI_MODELS_API + modelApiName + uriModelsApiEmbeddings;
+    log.debug("Einstein Request URL: {}", urlString);
+
+    CompletableFuture<HttpResponse> completableFuture = einsteinConnection.getHttpClient().sendAsync(
+                                                                                                     buildRequest(urlString,
+                                                                                                                  einsteinConnection
+                                                                                                                      .getAccessToken(),
+                                                                                                                  httpMethod,
+                                                                                                                  payload != null
+                                                                                                                      ? payload
+                                                                                                                      : new EmptyHttpEntity()));
+
+    completableFuture
+        .whenComplete((response, exception) -> handleHttpResponse(response, exception, EinsteinErrorType.MODELS_API_ERROR,
+                                                                  callback, responseConverter));
   }
 
   public JSONArray generateEmbeddingFromFileInputStream(InputStream inputStream,
                                                         ParamsEmbeddingDocumentDetails embeddingDocumentDetails)
-      throws IOException, TikaException, SAXException {
+      throws IOException, TikaException, SAXException, TimeoutException {
     if (inputStream == null) {
       throw new IllegalArgumentException("Input stream is null.");
     }
@@ -74,6 +138,7 @@ public class RequestHelper {
     try (BufferedInputStream bufferedInputStream = new BufferedInputStream(inputStream)) {
       List<String> corpus = createCorpusListFromStream(bufferedInputStream, embeddingDocumentDetails.getFileType(),
                                                        embeddingDocumentDetails.getOptionType());
+
       if ("PARAGRAPH".equalsIgnoreCase(embeddingDocumentDetails.getOptionType())) {
         allEmbeddings = getBatchCorpusEmbeddings(embeddingDocumentDetails.getModelApiName(), corpus);
       } else {
@@ -84,13 +149,13 @@ public class RequestHelper {
   }
 
   public InputStream executeRAG(String text, RAGParamsModelDetails paramDetails)
-      throws IOException {
+      throws IOException, TimeoutException {
     String payload = constructPayload(text, paramDetails.getLocale(), paramDetails.getProbability());
     return executeEinsteinRequest(payload, paramDetails.getModelApiName(), URI_MODELS_API_GENERATIONS);
   }
 
   public InputStream executeTools(String originalPrompt, String prompt, InputStream inputStream, ParamsModelDetails paramDetails)
-      throws IOException {
+      throws IOException, TimeoutException {
     String payload = constructPayload(prompt, paramDetails.getLocale(), paramDetails.getProbability());
     String payloadOptional = constructPayload(originalPrompt, paramDetails.getLocale(), paramDetails.getProbability());
 
@@ -118,7 +183,7 @@ public class RequestHelper {
 
   public JSONArray embeddingFileQuery(String prompt, InputStream inputStream, String modelName, String fileType,
                                       String optionType)
-      throws IOException, TikaException, SAXException {
+      throws IOException, TikaException, SAXException, TimeoutException {
 
     String body = constructEmbeddingJsonPayload(prompt);
     List<Double> embeddings = getQueryEmbedding(body, modelName);
@@ -148,7 +213,7 @@ public class RequestHelper {
     return corpus;
   }
 
-  private List<List<Double>> getCorpusEmbeddings(String modelName, List<String> corpus) throws IOException {
+  private List<List<Double>> getCorpusEmbeddings(String modelName, List<String> corpus) throws IOException, TimeoutException {
     List<List<Double>> corpusEmbeddings = new ArrayList<>();
 
     for (String text : corpus) {
@@ -179,7 +244,7 @@ public class RequestHelper {
         EinsteinEmbeddingResponseDTO embeddingResponseDTO =
             new ObjectMapper().readValue(embeddingResponse, EinsteinEmbeddingResponseDTO.class);
         allEmbeddings.add(embeddingResponseDTO.getEmbeddings().get(0).getEmbeddings());
-      } catch (IOException e) {
+      } catch (IOException | TimeoutException e) {
         throw new ModuleException("Error fetching embeddings", EinsteinErrorType.MODELS_API_ERROR, e);
       }
     }
@@ -187,7 +252,7 @@ public class RequestHelper {
   }
 
   private List<Double> getQueryEmbedding(String body, String modelName)
-      throws IOException {
+      throws IOException, TimeoutException {
 
     InputStream embeddingResponse = executeEinsteinRequest(body, modelName, URI_MODELS_API_EMBEDDINGS);
 
@@ -231,16 +296,17 @@ public class RequestHelper {
   }
 
   private InputStream executeEinsteinRequest(String payload, String modelName, String resource)
-      throws IOException {
+      throws IOException, TimeoutException {
 
     String urlString = einsteinConnection.getApiInstanceUrl() + URI_MODELS_API + modelName + resource;
     log.debug("Einstein Request URL: {}", urlString);
 
-    HttpURLConnection httpConnection = createURLConnection(urlString, HTTP_METHOD_POST);
-    addConnectionHeaders(httpConnection, einsteinConnection.getAccessToken());
-    writePayloadToConnStream(httpConnection, payload);
+    InputStream payloadStream = new ByteArrayInputStream(payload.getBytes(StandardCharsets.UTF_8));
 
-    return handleHttpResponse(httpConnection, EinsteinErrorType.MODELS_API_ERROR);
+    HttpResponse httpResponse = einsteinConnection.getHttpClient().send(buildRequest(urlString, einsteinConnection
+        .getAccessToken(), HTTP_METHOD_POST, new InputStreamHttpEntity(payloadStream)));
+
+    return handleHttpResponse(httpResponse, EinsteinErrorType.MODELS_API_ERROR);
   }
 
   private String getFileTypeContextFromFile(InputStream inputStream, String fileType)
@@ -389,7 +455,8 @@ public class RequestHelper {
     return jsonPayload.toString();
   }
 
-  private String getAttributes(String url, InputStream toolsConfigInputStream, String payload) throws IOException {
+  private String getAttributes(String url, InputStream toolsConfigInputStream, String payload)
+      throws IOException, TimeoutException {
 
     try (InputStream inputStream = toolsConfigInputStream) {
 
@@ -404,50 +471,29 @@ public class RequestHelper {
         if (node.getString("url").trim().equals(url)) {
           String method = node.getString("method");
           String headers = node.getString("headers");
-          URL urlObj = new URL(url);
-          HttpURLConnection conn = (HttpURLConnection) urlObj.openConnection();
-
-          conn.setRequestMethod(method);
+          HttpEntity httpEntity = "POST".equalsIgnoreCase(method)
+              ? new InputStreamHttpEntity(new ByteArrayInputStream(payload.getBytes(StandardCharsets.UTF_8)))
+              : new EmptyHttpEntity();
+          MultiMap<String, String> requestHeaders = new MultiMap<>();
           if (headers != null && !headers.isEmpty()) {
-            conn.setRequestProperty("Authorization", headers);
+            requestHeaders.put(AUTHORIZATION, headers);
           }
-          conn.setRequestProperty(CONTENT_TYPE_STRING, CONTENT_TYPE_APPLICATION_JSON);
-          conn.setDoOutput(true);
+          requestHeaders.put(CONTENT_TYPE_STRING, CONTENT_TYPE_APPLICATION_JSON);
 
-          BufferedReader in = getBufferedReader(payload, method, conn);
+          HttpRequest request = HttpRequest.builder()
+              .uri(url)
+              .headers(requestHeaders)
+              .method(method)
+              .entity(httpEntity)
+              .build();
 
-          String inputLine;
-          StringBuilder response = new StringBuilder();
-
-          while ((inputLine = in.readLine()) != null) {
-            response.append(inputLine);
-          }
-          in.close();
-
-          responseString = response.toString();
+          HttpResponse httpResponse = einsteinConnection.getHttpClient().send(request);
+          responseString = handleHttpResponseForTools(httpResponse);
           break;
         }
       }
       return responseString;
     }
-  }
-
-  private static BufferedReader getBufferedReader(String payload, String method, HttpURLConnection conn) throws IOException {
-    if (method.equals("POST")) {
-      try (DataOutputStream wr = new DataOutputStream(conn.getOutputStream())) {
-        wr.writeBytes(payload);
-        wr.flush();
-      }
-    }
-    int responseCode = conn.getResponseCode();
-
-    BufferedReader in;
-    if (responseCode >= 200 && responseCode < 300) {
-      in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-    } else {
-      in = new BufferedReader(new InputStreamReader(conn.getErrorStream()));
-    }
-    return in;
   }
 
   private String extractPayload(String payload) {
@@ -472,10 +518,21 @@ public class RequestHelper {
     return findPayload;
   }
 
-  private static void addConnectionHeaders(HttpURLConnection conn, String accessToken) {
-    conn.setRequestProperty(AUTHORIZATION, "Bearer " + accessToken);
-    conn.setRequestProperty(X_SFDC_APP_CONTEXT, EINSTEIN_GPT);
-    conn.setRequestProperty(X_CLIENT_FEATURE_ID, AI_PLATFORM_MODELS_CONNECTED_APP);
-    conn.setRequestProperty(CONTENT_TYPE_STRING, CONTENT_TYPE_APPLICATION_JSON);
+  private HttpRequest buildRequest(String url, String accessToken, String httpMethod, HttpEntity httpEntity) {
+    return HttpRequest.builder()
+        .uri(url)
+        .headers(addConnectionHeaders(accessToken))
+        .method(httpMethod)
+        .entity(httpEntity)
+        .build();
+  }
+
+  private MultiMap<String, String> addConnectionHeaders(String accessToken) {
+    MultiMap<String, String> multiMap = new MultiMap<>();
+    multiMap.put(AUTHORIZATION, "Bearer " + accessToken);
+    multiMap.put(X_SFDC_APP_CONTEXT, EINSTEIN_GPT);
+    multiMap.put(X_CLIENT_FEATURE_ID, AI_PLATFORM_MODELS_CONNECTED_APP);
+    multiMap.put(CONTENT_TYPE_STRING, CONTENT_TYPE_APPLICATION_JSON);
+    return multiMap;
   }
 }

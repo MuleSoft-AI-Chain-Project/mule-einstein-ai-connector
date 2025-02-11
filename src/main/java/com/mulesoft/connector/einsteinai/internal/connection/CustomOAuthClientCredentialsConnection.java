@@ -3,6 +3,7 @@ package com.mulesoft.connector.einsteinai.internal.connection;
 import com.mulesoft.connector.einsteinai.internal.modelsapi.helpers.RequestHelper;
 import com.mulesoft.connector.einsteinai.internal.modelsapi.helpers.chatmemory.ChatMemoryHelper;
 import org.mule.runtime.extension.api.connectivity.oauth.ClientCredentialsState;
+import org.mule.runtime.http.api.client.HttpClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -11,18 +12,16 @@ public class CustomOAuthClientCredentialsConnection implements EinsteinConnectio
   private static final Logger logger = LoggerFactory.getLogger(CustomOAuthClientCredentialsConnection.class);
 
   private final ClientCredentialsState clientCredentialsState;
-  private final String salesforceOrgUrl;
   private final String apiInstanceUrl;
-  private final String orgId;
   private final RequestHelper requestHelper;
   private final ChatMemoryHelper chatMemoryHelper;
+  private final HttpClient httpClient;
 
-  public CustomOAuthClientCredentialsConnection(String salesforceOrgUrl, ClientCredentialsState clientCredentialsState,
-                                                String apiInstanceUrl, String orgId) {
-    this.salesforceOrgUrl = salesforceOrgUrl;
+  public CustomOAuthClientCredentialsConnection(ClientCredentialsState clientCredentialsState,
+                                                String apiInstanceUrl, HttpClient httpClient) {
     this.clientCredentialsState = clientCredentialsState;
     this.apiInstanceUrl = apiInstanceUrl;
-    this.orgId = parseOrgId(orgId);
+    this.httpClient = httpClient;
     this.requestHelper = new RequestHelper(this);
     this.chatMemoryHelper = new ChatMemoryHelper(requestHelper);
   }
@@ -35,11 +34,7 @@ public class CustomOAuthClientCredentialsConnection implements EinsteinConnectio
 
   @Override
   public void validate() {
-    /*
-     * try { logger.info("Inside CustomOAuthClientCredentialsConnection validate, salesforceOrg {}", salesforceOrgUrl);
-     * botRequestHelper.getAgentList(); } catch (IOException e) { throw new ModuleException("Unable to validate credentials",
-     * EinsteinErrorType.INVALID_CONNECTION, e); }
-     */
+    logger.info("Inside CustomOAuthClientCredentialsConnection validate");
   }
 
   public String getApiInstanceUrl() {
@@ -61,8 +56,8 @@ public class CustomOAuthClientCredentialsConnection implements EinsteinConnectio
     return clientCredentialsState.getAccessToken();
   }
 
-  private String parseOrgId(String id) {
-    String[] idArr = id.split("/");
-    return idArr[idArr.length - 2];
+  @Override
+  public HttpClient getHttpClient() {
+    return httpClient;
   }
 }
