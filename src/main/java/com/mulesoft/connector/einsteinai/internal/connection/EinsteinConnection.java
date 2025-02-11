@@ -3,6 +3,7 @@ package com.mulesoft.connector.einsteinai.internal.connection;
 import com.mulesoft.connector.einsteinai.internal.modelsapi.helpers.RequestHelper;
 import com.mulesoft.connector.einsteinai.internal.modelsapi.helpers.chatmemory.ChatMemoryHelper;
 import com.mulesoft.connectors.commons.template.connection.ConnectorConnection;
+import org.mule.runtime.http.api.client.HttpClient;
 
 /**
  * This class represents a connection to the external system.
@@ -17,4 +18,6 @@ public interface EinsteinConnection extends ConnectorConnection {
   ChatMemoryHelper getChatMemoryHelper();
 
   String getAccessToken();
+
+  HttpClient getHttpClient();
 }

@@ -3,16 +3,18 @@ package com.mulesoft.connector.einsteinai.internal.helpers;
 import com.mulesoft.connector.einsteinai.internal.error.EinsteinErrorType;
 import org.mule.runtime.extension.api.connectivity.oauth.AccessTokenExpiredException;
 import org.mule.runtime.extension.api.exception.ModuleException;
+import org.mule.runtime.extension.api.runtime.operation.Result;
+import org.mule.runtime.extension.api.runtime.process.CompletionCallback;
+import org.mule.runtime.http.api.domain.message.response.HttpResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
-
-import static com.mulesoft.connector.einsteinai.internal.helpers.EinsteinConstantUtil.CONNECTION_TIME_OUT;
-import static com.mulesoft.connector.einsteinai.internal.helpers.EinsteinConstantUtil.READ_TIME_OUT;
 
 public class HttpRequestHelper {
 
@@ -21,16 +23,6 @@ public class HttpRequestHelper {
   }
 
   private static final Logger log = LoggerFactory.getLogger(HttpRequestHelper.class);
-
-  public static HttpURLConnection createURLConnection(String urlString, String httpMethod) throws IOException {
-    URL url = new URL(urlString);
-    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-    conn.setRequestMethod(httpMethod);
-    conn.setConnectTimeout(CONNECTION_TIME_OUT);
-    conn.setReadTimeout(READ_TIME_OUT);
-    conn.setDoOutput(true);
-    return conn;
-  }
 
   public static String readResponseStream(InputStream inputStream) throws IOException {
     try (BufferedReader br = new BufferedReader(
@@ -62,20 +54,19 @@ public class HttpRequestHelper {
     }
   }
 
-  public static InputStream handleHttpResponse(HttpURLConnection httpConnection, EinsteinErrorType errorType)
-      throws IOException {
-    int responseCode = httpConnection.getResponseCode();
+  public static InputStream handleHttpResponse(HttpResponse httpResponse, EinsteinErrorType errorType) {
+    int responseCode = httpResponse.getStatusCode();
 
     if (responseCode == HttpURLConnection.HTTP_OK) {
-      if (httpConnection.getInputStream() == null) {
+      if (httpResponse.getEntity().getContent() == null) {
         throw new ModuleException(
                                   "Error: No response received from Einstein", errorType);
       }
-      return httpConnection.getInputStream();
+      return httpResponse.getEntity().getContent();
     } else if (responseCode == HttpURLConnection.HTTP_UNAUTHORIZED) {
       throw new AccessTokenExpiredException();
     } else {
-      String errorMessage = readErrorStream(httpConnection.getErrorStream());
+      String errorMessage = readErrorStream(httpResponse.getEntity().getContent());
       log.info("Error in HTTP request. Response code: {}, message: {}", responseCode, errorMessage);
       throw new ModuleException(
                                 String.format("Error in HTTP request. ErrorCode: %d ," +
@@ -84,11 +75,60 @@ public class HttpRequestHelper {
     }
   }
 
-  public static void writePayloadToConnStream(HttpURLConnection httpConnection, String payload) throws IOException {
-    try (OutputStream os = httpConnection.getOutputStream()) {
-      byte[] input = payload.getBytes(StandardCharsets.UTF_8);
-      os.write(input, 0, input.length);
-      os.flush();
+  public static <A> void handleHttpResponse(HttpResponse httpResponse, Throwable exception,
+                                            EinsteinErrorType einsteinErrorType,
+                                            CompletionCallback<InputStream, A> callback,
+                                            ThrowingFunction<InputStream, Result<InputStream, A>> responseConverter) {
+    if (exception != null) {
+      callback.error(exception);
+      return;
     }
+    InputStream contentStream = parseHttpResponse(httpResponse, einsteinErrorType, callback);
+    if (contentStream == null) {
+      return;
+    }
+    try {
+      callback.success(responseConverter.apply(contentStream));
+    } catch (IOException e) {
+      callback.error(e);
+    }
+  }
+
+  public static String handleHttpResponseForTools(HttpResponse httpResponse) throws IOException {
+    // Read the response stream
+    InputStream responseStream = httpResponse.getEntity().getContent();
+
+    try (BufferedReader in = new BufferedReader(new InputStreamReader(responseStream, StandardCharsets.UTF_8))) {
+      StringBuilder response = new StringBuilder();
+      String inputLine;
+      while ((inputLine = in.readLine()) != null) {
+        response.append(inputLine);
+      }
+      return response.toString();
+    }
+  }
+
+  private static InputStream parseHttpResponse(HttpResponse httpResponse, EinsteinErrorType einsteinErrorType,
+                                               CompletionCallback callback) {
+
+    int statusCode = httpResponse.getStatusCode();
+    log.debug("Parsing Http Response, statusCode = {}", statusCode);
+
+    if (statusCode == HttpURLConnection.HTTP_OK) {
+      if (httpResponse.getEntity().getContent() == null) {
+        callback.error(new ModuleException(
+                                           "Error: No response received from Einstein", einsteinErrorType));
+      }
+      return httpResponse.getEntity().getContent();
+    } else if (statusCode == HttpURLConnection.HTTP_UNAUTHORIZED) {
+      callback.error(new AccessTokenExpiredException());
+    } else {
+      String errorMessage = readErrorStream(httpResponse.getEntity().getContent());
+      log.info("Error in HTTP request. Response code: {}, message: {}", statusCode, errorMessage);
+      callback.error(new ModuleException(String.format("Error in HTTP request. ErrorCode: %d, ErrorMessage: %s", statusCode,
+                                                       errorMessage),
+                                         einsteinErrorType));
+    }
+    return null;
   }
 }

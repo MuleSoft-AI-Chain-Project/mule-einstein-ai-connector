@@ -5,7 +5,6 @@ import com.mulesoft.connector.einsteinai.api.metadata.ResponseParameters;
 import com.mulesoft.connector.einsteinai.internal.connection.EinsteinConnection;
 import com.mulesoft.connector.einsteinai.internal.error.provider.ChatErrorTypeProvider;
 import com.mulesoft.connector.einsteinai.internal.modelsapi.helpers.PromptTemplateHelper;
-import com.mulesoft.connector.einsteinai.internal.modelsapi.helpers.ResponseHelper;
 import com.mulesoft.connector.einsteinai.internal.modelsapi.models.ParamsModelDetails;
 import org.mule.runtime.extension.api.annotation.Alias;
 import org.mule.runtime.extension.api.annotation.error.Throws;
@@ -15,7 +14,7 @@ import org.mule.runtime.extension.api.annotation.param.Content;
 import org.mule.runtime.extension.api.annotation.param.MediaType;
 import org.mule.runtime.extension.api.annotation.param.ParameterGroup;
 import org.mule.runtime.extension.api.exception.ModuleException;
-import org.mule.runtime.extension.api.runtime.operation.Result;
+import org.mule.runtime.extension.api.runtime.process.CompletionCallback;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,18 +37,17 @@ public class EinsteinGenerationOperations {
   @Alias("AGENT-define-prompt-template")
   @Throws(ChatErrorTypeProvider.class)
   @OutputJsonType(schema = "api/response/EinsteinOperationResponse.json")
-  public Result<InputStream, EinsteinResponseAttributes> definePromptTemplate(@Connection EinsteinConnection connection,
-                                                                              @Content(primary = true) String template,
-                                                                              @Content String instructions,
-                                                                              @Content String dataset,
-                                                                              @ParameterGroup(
-                                                                                  name = "Additional properties") ParamsModelDetails paramDetails) {
+  public void definePromptTemplate(@Connection EinsteinConnection connection,
+                                   @Content(primary = true) String template,
+                                   @Content String instructions,
+                                   @Content String dataset,
+                                   @ParameterGroup(
+                                       name = "Additional properties") ParamsModelDetails paramDetails,
+                                   CompletionCallback<InputStream, EinsteinResponseAttributes> callback) {
     log.info("Executing agent defined prompt template operation.");
     try {
       String finalPromptTemplate = PromptTemplateHelper.definePromptTemplate(template, instructions, dataset);
-      InputStream responseStream = connection.getRequestHelper().executeGenerateText(finalPromptTemplate, paramDetails);
-
-      return ResponseHelper.createEinsteinFormattedResponse(responseStream);
+      connection.getRequestHelper().executeGenerateText(finalPromptTemplate, paramDetails, callback);
     } catch (Exception e) {
       throw new ModuleException("Error while generating prompt from template " + template + ", instructions "
           + instructions + ", dataset " + dataset, CHAT_FAILURE, e);
@@ -63,15 +61,14 @@ public class EinsteinGenerationOperations {
   @Alias("CHAT-answer-prompt")
   @Throws(ChatErrorTypeProvider.class)
   @OutputJsonType(schema = "api/response/EinsteinOperationResponse.json")
-  public Result<InputStream, EinsteinResponseAttributes> generateText(@Connection EinsteinConnection connection,
-                                                                      @Content String prompt,
-                                                                      @ParameterGroup(
-                                                                          name = "Additional properties") ParamsModelDetails paramDetails) {
+  public void generateText(@Connection EinsteinConnection connection,
+                           @Content String prompt,
+                           @ParameterGroup(
+                               name = "Additional properties") ParamsModelDetails paramDetails,
+                           CompletionCallback<InputStream, EinsteinResponseAttributes> callback) {
     log.info("Executing chat answer prompt operation.");
     try {
-      InputStream responseStream = connection.getRequestHelper().executeGenerateText(prompt, paramDetails);
-
-      return ResponseHelper.createEinsteinFormattedResponse(responseStream);
+      connection.getRequestHelper().executeGenerateText(prompt, paramDetails, callback);
     } catch (Exception e) {
       throw new ModuleException("Error while generating text for prompt " + prompt, CHAT_FAILURE, e);
     }
@@ -84,21 +81,18 @@ public class EinsteinGenerationOperations {
   @Alias("CHAT-answer-prompt-with-memory")
   @Throws(ChatErrorTypeProvider.class)
   @OutputJsonType(schema = "api/response/EinsteinOperationResponse.json")
-  public Result<InputStream, EinsteinResponseAttributes> generateTextMemory(@Connection EinsteinConnection connection,
-                                                                            @Content(primary = true) String prompt,
-                                                                            String memoryPath,
-                                                                            String memoryName,
-                                                                            Integer keepLastMessages,
-                                                                            @ParameterGroup(
-                                                                                name = "Additional properties") ParamsModelDetails paramDetails) {
+  public void generateTextMemory(@Connection EinsteinConnection connection,
+                                 @Content(primary = true) String prompt,
+                                 String memoryPath,
+                                 String memoryName,
+                                 Integer keepLastMessages,
+                                 @ParameterGroup(
+                                     name = "Additional properties") ParamsModelDetails paramDetails,
+                                 CompletionCallback<InputStream, EinsteinResponseAttributes> callback) {
     log.info("Executing chat answer prompt with memory operation.");
     try {
-
-      InputStream responseStream =
-          connection.getChatMemoryHelper().chatWithMemory(prompt, memoryPath, memoryName, keepLastMessages,
-                                                          paramDetails);
-
-      return ResponseHelper.createEinsteinFormattedResponse(responseStream);
+      connection.getChatMemoryHelper().chatWithMemory(prompt, memoryPath, memoryName, keepLastMessages,
+                                                      paramDetails, callback);
     } catch (Exception e) {
       throw new ModuleException("Error while generating text from memory path " + memoryPath + ", memory name "
           + memoryName + ", for prompt " + prompt, CHAT_FAILURE, e);
@@ -112,16 +106,14 @@ public class EinsteinGenerationOperations {
   @Alias("CHAT-generate-from-messages")
   @Throws(ChatErrorTypeProvider.class)
   @OutputJsonType(schema = "api/response/EinsteinChatFromMessagesResponse.json")
-  public Result<InputStream, ResponseParameters> generateChatFromMessages(@Connection EinsteinConnection connection,
-                                                                          @Content String messages,
-                                                                          @ParameterGroup(
-                                                                              name = "Additional properties") ParamsModelDetails paramDetails) {
+  public void generateChatFromMessages(@Connection EinsteinConnection connection,
+                                       @Content String messages,
+                                       @ParameterGroup(
+                                           name = "Additional properties") ParamsModelDetails paramDetails,
+                                       CompletionCallback<InputStream, ResponseParameters> callback) {
     log.info("Executing chat generate from message operation.");
     try {
-
-      InputStream responseStream = connection.getRequestHelper().generateChatFromMessages(messages, paramDetails);
-
-      return ResponseHelper.createEinsteinChatFromMessagesResponse(responseStream);
+      connection.getRequestHelper().generateChatFromMessages(messages, paramDetails, callback);
     } catch (Exception e) {
       throw new ModuleException("Error while generating the chat from messages " + messages, CHAT_FAILURE, e);
     }

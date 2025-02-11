@@ -68,9 +68,7 @@ public class ResponseHelper {
         .build();
   }
 
-  public static Result<InputStream, ResponseParameters> createEinsteinEmbeddingResponse(InputStream response)
-      throws IOException {
-
+  public static Result<InputStream, ResponseParameters> createEinsteinEmbeddingResponse(InputStream response) throws IOException {
     EinsteinEmbeddingResponseDTO responseDTO = objectMapper.readValue(response, EinsteinEmbeddingResponseDTO.class);
     JSONObject jsonObject = new JSONObject();
     jsonObject.put("embeddings", responseDTO.getEmbeddings());
