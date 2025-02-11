@@ -49,8 +49,8 @@ public class EinsteinGenerationOperations {
       String finalPromptTemplate = PromptTemplateHelper.definePromptTemplate(template, instructions, dataset);
       connection.getRequestHelper().executeGenerateText(finalPromptTemplate, paramDetails, callback);
     } catch (Exception e) {
-      throw new ModuleException("Error while generating prompt from template " + template + ", instructions "
-          + instructions + ", dataset " + dataset, CHAT_FAILURE, e);
+      callback.error(new ModuleException("Error while generating prompt from template " + template + ", instructions "
+          + instructions + ", dataset " + dataset, CHAT_FAILURE, e));
     }
   }
 
@@ -70,7 +70,7 @@ public class EinsteinGenerationOperations {
     try {
       connection.getRequestHelper().executeGenerateText(prompt, paramDetails, callback);
     } catch (Exception e) {
-      throw new ModuleException("Error while generating text for prompt " + prompt, CHAT_FAILURE, e);
+      callback.error(new ModuleException("Error while generating text for prompt " + prompt, CHAT_FAILURE, e));
     }
   }
 
@@ -94,8 +94,8 @@ public class EinsteinGenerationOperations {
       connection.getChatMemoryHelper().chatWithMemory(prompt, memoryPath, memoryName, keepLastMessages,
                                                       paramDetails, callback);
     } catch (Exception e) {
-      throw new ModuleException("Error while generating text from memory path " + memoryPath + ", memory name "
-          + memoryName + ", for prompt " + prompt, CHAT_FAILURE, e);
+      callback.error(new ModuleException("Error while generating text from memory path " + memoryPath + ", memory name "
+          + memoryName + ", for prompt " + prompt, CHAT_FAILURE, e));
     }
   }
 
@@ -115,7 +115,7 @@ public class EinsteinGenerationOperations {
     try {
       connection.getRequestHelper().generateChatFromMessages(messages, paramDetails, callback);
     } catch (Exception e) {
-      throw new ModuleException("Error while generating the chat from messages " + messages, CHAT_FAILURE, e);
+      callback.error(new ModuleException("Error while generating the chat from messages " + messages, CHAT_FAILURE, e));
     }
   }
 }

@@ -17,16 +17,15 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mule.runtime.extension.api.exception.ModuleException;
 import org.mule.runtime.extension.api.runtime.process.CompletionCallback;
 
-import java.io.IOException;
 import java.io.InputStream;
 
 import static com.mulesoft.connector.einsteinai.internal.error.EinsteinErrorType.CHAT_FAILURE;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -76,16 +75,15 @@ class EinsteinGenerationOperationsTest {
     doThrow(new RuntimeException("Test exception"))
         .when(requestHelperMock).executeGenerateText(anyString(), any(), any());
 
-    ModuleException exception = assertThrows(ModuleException.class,
-                                             () -> einsteinGenerationOperations.definePromptTemplate(
-                                                                                                     connectionMock, template,
-                                                                                                     instructions, dataset,
-                                                                                                     paramDetailsMock,
-                                                                                                     callbackMock));
+    einsteinGenerationOperations.definePromptTemplate(connectionMock, template, instructions, dataset, paramDetailsMock,
+                                                      callbackMock);
 
-    assertEquals("Error while generating prompt from template Template, instructions Instructions, dataset Dataset",
-                 exception.getMessage());
-    assertEquals(CHAT_FAILURE, exception.getType());
+    // Verify that callback.error() was called with the expected ModuleException
+    verify(callbackMock).error(argThat(exception -> exception instanceof ModuleException &&
+        exception.getMessage()
+            .equals("Error while generating prompt from template Template, instructions Instructions, dataset Dataset")
+        &&
+        ((ModuleException) exception).getType().equals(CHAT_FAILURE)));
   }
 
 
@@ -97,18 +95,15 @@ class EinsteinGenerationOperationsTest {
     doThrow(new RuntimeException("Test exception"))
         .when(requestHelperMock).executeGenerateText(anyString(), any(), any());
 
-    ModuleException exception =
-        assertThrows(ModuleException.class,
-                     () -> einsteinGenerationOperations.generateText(connectionMock, prompt, paramDetailsMock, callbackMock));
+    einsteinGenerationOperations.generateText(connectionMock, prompt, paramDetailsMock, callbackMock);
 
-    assertEquals(
-                 "Error while generating text for prompt Test Prompt",
-                 exception.getMessage());
-    assertEquals(CHAT_FAILURE, exception.getType());
+    verify(callbackMock).error(argThat(exception -> exception instanceof ModuleException &&
+        exception.getMessage().equals("Error while generating text for prompt Test Prompt") &&
+        ((ModuleException) exception).getType().equals(CHAT_FAILURE)));
   }
 
   @Test
-  void testGenerateTextMemoryFailure() throws IOException {
+  void testGenerateTextMemoryFailure() {
     String prompt = "Test";
     String memoryPath = "src/resources/testdb";
     String memoryName = "vt";
@@ -120,17 +115,18 @@ class EinsteinGenerationOperationsTest {
                                                    anyString(), anyString(), anyString(), anyInt(), any(), any());
 
 
-    ModuleException exception = assertThrows(ModuleException.class, () -> einsteinGenerationOperations
-        .generateTextMemory(connectionMock, prompt, memoryPath, memoryName, keepLastMessages, paramDetailsMock, callbackMock));
+    einsteinGenerationOperations.generateTextMemory(connectionMock, prompt, memoryPath, memoryName, keepLastMessages,
+                                                    paramDetailsMock, callbackMock);
 
-    assertEquals(
-                 "Error while generating text from memory path src/resources/testdb, memory name vt, for prompt Test",
-                 exception.getMessage());
-    assertEquals(CHAT_FAILURE, exception.getType());
+    verify(callbackMock).error(argThat(exception -> exception instanceof ModuleException &&
+        exception.getMessage()
+            .equals("Error while generating text from memory path src/resources/testdb, memory name vt, for prompt Test")
+        &&
+        ((ModuleException) exception).getType() == CHAT_FAILURE));
   }
 
   @Test
-  void testGenerateChatFailure() throws IOException {
+  void testGenerateChatFailure() {
     String messages = "Test Messages";
     when(connectionMock.getRequestHelper()).thenReturn(requestHelperMock);
 
@@ -138,15 +134,11 @@ class EinsteinGenerationOperationsTest {
         .when(requestHelperMock).generateChatFromMessages(
                                                           anyString(), any(), any());
 
-    ModuleException exception =
-        assertThrows(ModuleException.class,
-                     () -> einsteinGenerationOperations.generateChatFromMessages(connectionMock, messages, paramDetailsMock,
-                                                                                 callbackMock2));
+    einsteinGenerationOperations.generateChatFromMessages(connectionMock, messages, paramDetailsMock, callbackMock2);
 
-    assertEquals(
-                 "Error while generating the chat from messages Test Messages",
-                 exception.getMessage());
-    assertEquals(CHAT_FAILURE, exception.getType());
+    verify(callbackMock2).error(argThat(exception -> exception instanceof ModuleException &&
+        exception.getMessage().equals("Error while generating the chat from messages Test Messages") &&
+        ((ModuleException) exception).getType() == CHAT_FAILURE));
   }
 }
 
