@@ -10,6 +10,13 @@
     <packaging>mule-extension</packaging>
     <name>Einstein AI Connector - Mule 4</name>
     <description>Secure and manage LLM integration via Einstein Trust Layer</description>
+  
+    <url>https://mac-project.ai/docs/einstein-ai/connector-overview</url>
+    <scm>
+        <connection>scm:git:git://github.com/MuleSoft-AI-Chain-Project/mule-einstein-ai-connector.git</connection>
+        <developerConnection>scm:git:ssh://github.com:MuleSoft-AI-Chain-Project/mule-einstein-ai-connector.git</developerConnection>
+        <url>https://github.com/MuleSoft-AI-Chain-Project/mule-einstein-ai-connector/tree/master</url>
+    </scm>
 
     <licenses>
         <license>
