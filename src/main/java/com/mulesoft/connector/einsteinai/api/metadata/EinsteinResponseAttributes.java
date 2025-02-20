@@ -3,6 +3,7 @@ package com.mulesoft.connector.einsteinai.api.metadata;
 import com.mulesoft.connector.einsteinai.api.metadata.quality.ContentQuality;
 
 import java.io.Serializable;
+import java.util.Objects;
 
 public class EinsteinResponseAttributes implements Serializable {
 
@@ -41,4 +42,20 @@ public class EinsteinResponseAttributes implements Serializable {
     return responseParameters;
   }
 
+  @Override
+  public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (o == null || getClass() != o.getClass())
+      return false;
+    EinsteinResponseAttributes that = (EinsteinResponseAttributes) o;
+    return Objects.equals(responseId, that.responseId) && Objects.equals(generationId, that.generationId)
+        && Objects.equals(contentQuality, that.contentQuality) && Objects.equals(generationParameters, that.generationParameters)
+        && Objects.equals(responseParameters, that.responseParameters);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(responseId, generationId, contentQuality, generationParameters, responseParameters);
+  }
 }
