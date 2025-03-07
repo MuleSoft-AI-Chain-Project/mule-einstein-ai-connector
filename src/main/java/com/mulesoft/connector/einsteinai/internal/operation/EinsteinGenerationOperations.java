@@ -75,31 +75,6 @@ public class EinsteinGenerationOperations {
   }
 
   /**
-   * Generate a response based on the prompt using chat memory.
-   */
-  @MediaType(value = APPLICATION_JSON, strict = false)
-  @Alias("CHAT-answer-prompt-with-memory")
-  @Throws(ChatErrorTypeProvider.class)
-  @OutputJsonType(schema = "api/response/EinsteinOperationResponse.json")
-  public void generateTextMemory(@Connection EinsteinConnection connection,
-                                 @Content(primary = true) String prompt,
-                                 String memoryPath,
-                                 String memoryName,
-                                 Integer keepLastMessages,
-                                 @ParameterGroup(
-                                     name = "Additional properties") ParamsModelDetails paramDetails,
-                                 CompletionCallback<InputStream, EinsteinResponseAttributes> callback) {
-    log.info("Executing chat answer prompt with memory operation.");
-    try {
-      connection.getChatMemoryHelper().chatWithMemory(prompt, memoryPath, memoryName, keepLastMessages,
-                                                      paramDetails, callback);
-    } catch (Exception e) {
-      callback.error(new ModuleException("Error while generating text from memory path " + memoryPath + ", memory name "
-          + memoryName + ", for prompt " + prompt, CHAT_FAILURE, e));
-    }
-  }
-
-  /**
    * Generate a response based on a list of messages representing a chat conversation.
    */
   @MediaType(value = APPLICATION_JSON, strict = false)
