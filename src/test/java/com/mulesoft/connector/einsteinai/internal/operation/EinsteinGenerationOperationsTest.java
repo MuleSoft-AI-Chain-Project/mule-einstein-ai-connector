@@ -4,7 +4,6 @@ import com.mulesoft.connector.einsteinai.api.metadata.EinsteinResponseAttributes
 import com.mulesoft.connector.einsteinai.api.metadata.ResponseParameters;
 import com.mulesoft.connector.einsteinai.internal.connection.EinsteinConnection;
 import com.mulesoft.connector.einsteinai.internal.modelsapi.helpers.RequestHelper;
-import com.mulesoft.connector.einsteinai.internal.modelsapi.helpers.chatmemory.ChatMemoryHelper;
 import com.mulesoft.connector.einsteinai.internal.modelsapi.models.ParamsModelDetails;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -35,9 +34,6 @@ class EinsteinGenerationOperationsTest {
 
   @Mock
   private RequestHelper requestHelperMock;
-
-  @Mock
-  private ChatMemoryHelper chatMemoryHelperMock;
 
   @Mock
   private EinsteinConnection connectionMock;
@@ -100,29 +96,6 @@ class EinsteinGenerationOperationsTest {
     verify(callbackMock).error(argThat(exception -> exception instanceof ModuleException &&
         exception.getMessage().equals("Error while generating text for prompt Test Prompt") &&
         ((ModuleException) exception).getType().equals(CHAT_FAILURE)));
-  }
-
-  @Test
-  void testGenerateTextMemoryFailure() {
-    String prompt = "Test";
-    String memoryPath = "src/resources/testdb";
-    String memoryName = "vt";
-    Integer keepLastMessages = 10;
-
-    when(connectionMock.getChatMemoryHelper()).thenReturn(chatMemoryHelperMock);
-    doThrow(new RuntimeException("Test exception"))
-        .when(chatMemoryHelperMock).chatWithMemory(
-                                                   anyString(), anyString(), anyString(), anyInt(), any(), any());
-
-
-    einsteinGenerationOperations.generateTextMemory(connectionMock, prompt, memoryPath, memoryName, keepLastMessages,
-                                                    paramDetailsMock, callbackMock);
-
-    verify(callbackMock).error(argThat(exception -> exception instanceof ModuleException &&
-        exception.getMessage()
-            .equals("Error while generating text from memory path src/resources/testdb, memory name vt, for prompt Test")
-        &&
-        ((ModuleException) exception).getType() == CHAT_FAILURE));
   }
 
   @Test

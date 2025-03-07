@@ -31,12 +31,6 @@ http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/fil
 			<ms-einstein-ai:prompt ><![CDATA[#[payload.prompt]]]></ms-einstein-ai:prompt>
 		</ms-einstein-ai:chat-answer-prompt>
 	</flow>
-	<flow name="einstein3Flow2" doc:id="dd60b6bf-e53d-40f4-9148-02acce50b4ec" >
-		<http:listener doc:name="Listener" doc:id="1a93d492-1c70-4396-9616-8887659715d9" config-ref="HTTP_Listener_config" path="/test3" allowedMethods="POST"/>
-		<ms-einstein-ai:chat-answer-prompt-with-memory doc:name="Chat answer prompt with memory" doc:id="5d39f3b3-c7fa-4a00-a82e-4894bbf1fd64" config-ref="Anypoint_Einstein_Config" memoryPath="#[payload.memoryPath]" memoryName="#[payload.memoryName]" keepLastMessages="#[payload.lastMsg]">
-			<ms-einstein-ai:prompt ><![CDATA[#[payload.prompt]]]></ms-einstein-ai:prompt>
-		</ms-einstein-ai:chat-answer-prompt-with-memory>
-	</flow>
 	<flow name="einstein3Flow3" doc:id="db27b63a-96ea-4677-924a-07a4db314539" >
 		<http:listener doc:name="Listener" doc:id="049948d1-2ff0-4903-b423-e902bbba5b92" config-ref="HTTP_Listener_config" path="/test4" allowedMethods="POST"/>
 		<ms-einstein-ai:chat-generate-from-messages doc:name="Chat generate from messages" doc:id="6d51c427-d640-4753-8338-2621ee110ce7" config-ref="Anypoint_Einstein_Config">
