@@ -27,7 +27,6 @@ You can use postman to trigger curls under the web server http://localhost:8081
 
 * POST - /promptTemplate (Prompt template)
 * POST - /chat (Chat answer prompt)
-* POST - /chatwithmemory (Chat answer prompt with memory)
 * POST - /chatgenfrommsg (Chat Generate From Messages )
 * POST - /embedtext (Generate Embedding from Text)
 * POST - /embedfile (Generate Embedding from File)

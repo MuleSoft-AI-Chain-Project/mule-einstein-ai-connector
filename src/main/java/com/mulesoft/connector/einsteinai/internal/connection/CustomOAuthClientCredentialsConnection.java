@@ -1,7 +1,6 @@
 package com.mulesoft.connector.einsteinai.internal.connection;
 
 import com.mulesoft.connector.einsteinai.internal.modelsapi.helpers.RequestHelper;
-import com.mulesoft.connector.einsteinai.internal.modelsapi.helpers.chatmemory.ChatMemoryHelper;
 import org.mule.runtime.extension.api.connectivity.oauth.ClientCredentialsState;
 import org.mule.runtime.http.api.client.HttpClient;
 import org.slf4j.Logger;
@@ -14,7 +13,6 @@ public class CustomOAuthClientCredentialsConnection implements EinsteinConnectio
   private final ClientCredentialsState clientCredentialsState;
   private final String apiInstanceUrl;
   private final RequestHelper requestHelper;
-  private final ChatMemoryHelper chatMemoryHelper;
   private final HttpClient httpClient;
 
   public CustomOAuthClientCredentialsConnection(ClientCredentialsState clientCredentialsState,
@@ -23,7 +21,6 @@ public class CustomOAuthClientCredentialsConnection implements EinsteinConnectio
     this.apiInstanceUrl = apiInstanceUrl;
     this.httpClient = httpClient;
     this.requestHelper = new RequestHelper(this);
-    this.chatMemoryHelper = new ChatMemoryHelper(requestHelper);
   }
 
   @Override
@@ -44,11 +41,6 @@ public class CustomOAuthClientCredentialsConnection implements EinsteinConnectio
   @Override
   public RequestHelper getRequestHelper() {
     return requestHelper;
-  }
-
-  @Override
-  public ChatMemoryHelper getChatMemoryHelper() {
-    return chatMemoryHelper;
   }
 
   @Override

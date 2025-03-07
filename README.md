@@ -7,7 +7,6 @@ MuleSoft Einstein AI Connector for Salesforce Einstein AI to interact with the _
 - **Ingest files into the Vector Database**
 - **Build Prompt Templates in your workflow**
 - **Perform adhoc RAG using the Vector Database**
-- **Build Chat Memory capabilities**
 - **Optimized usage in MuleSoft applications**
 
 ### Requirements
