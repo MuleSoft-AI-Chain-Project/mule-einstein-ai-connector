@@ -22,7 +22,7 @@ public class ResponseHelper {
     throw new IllegalStateException("Utility class");
   }
 
-  private static final ObjectMapper objectMapper = ObjectMapperSingleton.INSTANCE;
+  private static final ObjectMapper objectMapper = ObjectMapperProvider.create();
 
   public static Result<InputStream, Void> createEinsteinDefaultResponse(String response) {
 

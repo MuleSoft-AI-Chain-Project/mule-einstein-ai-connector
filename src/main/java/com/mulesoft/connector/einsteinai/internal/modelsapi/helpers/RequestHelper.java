@@ -70,7 +70,7 @@ import static com.mulesoft.connector.einsteinai.internal.modelsapi.helpers.Const
 public class RequestHelper {
 
   private static final Logger log = LoggerFactory.getLogger(RequestHelper.class);
-  private static final ObjectMapper objectMapper = ObjectMapperSingleton.INSTANCE;;
+  private static final ObjectMapper objectMapper = ObjectMapperProvider.create();
 
   private final EinsteinConnection einsteinConnection;
 
