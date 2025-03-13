@@ -17,13 +17,17 @@ public class GenerationParameters implements Serializable {
   private final String logprobs;
   private final List<String> annotations;
 
-  @ConstructorProperties({"finshReason", "refusal", "index", "logprobs", "annotations"})
+  public GenerationParameters(String finishReason, String refusal, int index, String logprobs) {
+    this(finishReason, refusal, index, logprobs, null);
+  }
+
+  @ConstructorProperties({"finishReason", "refusal", "index", "logprobs", "annotations"})
   public GenerationParameters(String finishReason, String refusal, int index, String logprobs, List<String> annotations) {
     this.finishReason = finishReason;
     this.refusal = refusal;
     this.index = index;
     this.logprobs = logprobs;
-    this.annotations = annotations; // Initialize the annotations field as List<String>
+    this.annotations = annotations;
   }
 
   public String getFinishReason() {
