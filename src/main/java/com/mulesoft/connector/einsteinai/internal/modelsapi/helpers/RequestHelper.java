@@ -70,6 +70,8 @@ import static com.mulesoft.connector.einsteinai.internal.modelsapi.helpers.Const
 public class RequestHelper {
 
   private static final Logger log = LoggerFactory.getLogger(RequestHelper.class);
+  private static final ObjectMapper objectMapper = ObjectMapperProvider.create();
+
   private final EinsteinConnection einsteinConnection;
 
   public RequestHelper(EinsteinConnection einsteinConnection) {
@@ -221,7 +223,7 @@ public class RequestHelper {
         String corpusBody = constructEmbeddingJsonPayload(text);
         try (InputStream embeddingResponse = executeEinsteinRequest(corpusBody, modelName, URI_MODELS_API_EMBEDDINGS)) {
           EinsteinEmbeddingResponseDTO embeddingResponseDTO =
-              new ObjectMapper().readValue(embeddingResponse, EinsteinEmbeddingResponseDTO.class);
+              objectMapper.readValue(embeddingResponse, EinsteinEmbeddingResponseDTO.class);
           corpusEmbeddings.add(embeddingResponseDTO.getEmbeddings().get(0).getEmbeddings());
         }
       }
@@ -242,7 +244,7 @@ public class RequestHelper {
       try (InputStream embeddingResponse = executeEinsteinRequest(batchJsonPayload, modelName, URI_MODELS_API_EMBEDDINGS)) {
         // Parse the embedding response and add it to allEmbeddings
         EinsteinEmbeddingResponseDTO embeddingResponseDTO =
-            new ObjectMapper().readValue(embeddingResponse, EinsteinEmbeddingResponseDTO.class);
+            objectMapper.readValue(embeddingResponse, EinsteinEmbeddingResponseDTO.class);
         allEmbeddings.add(embeddingResponseDTO.getEmbeddings().get(0).getEmbeddings());
       } catch (IOException | TimeoutException e) {
         throw new ModuleException("Error fetching embeddings", EinsteinErrorType.MODELS_API_ERROR, e);
@@ -257,7 +259,7 @@ public class RequestHelper {
     InputStream embeddingResponse = executeEinsteinRequest(body, modelName, URI_MODELS_API_EMBEDDINGS);
 
     EinsteinEmbeddingResponseDTO embeddingResponseDTO =
-        new ObjectMapper().readValue(embeddingResponse, EinsteinEmbeddingResponseDTO.class);
+        objectMapper.readValue(embeddingResponse, EinsteinEmbeddingResponseDTO.class);
 
     return embeddingResponseDTO.getEmbeddings().get(0).getEmbeddings();
   }
