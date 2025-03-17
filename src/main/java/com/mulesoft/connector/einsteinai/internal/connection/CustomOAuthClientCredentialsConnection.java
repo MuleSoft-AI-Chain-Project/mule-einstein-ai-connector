@@ -37,7 +37,8 @@ public class CustomOAuthClientCredentialsConnection implements EinsteinConnectio
     logger.info("Inside CustomOAuthClientCredentialsConnection validate");
     if (StringUtils.isBlank(apiInstanceUrl)) {
       logger.error("Missing Configuration. Api Instance Url is empty");
-      throw new ModuleException("Connection failed. Missing Configuration.", EinsteinErrorType.INVALID_CONNECTION);
+      throw new ModuleException("Connection failed. Missing Configuration: Empty API Instance URL",
+                                EinsteinErrorType.INVALID_CONNECTION);
     }
   }
 
