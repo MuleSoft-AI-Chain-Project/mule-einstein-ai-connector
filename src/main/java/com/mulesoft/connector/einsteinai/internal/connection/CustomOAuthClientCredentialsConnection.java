@@ -1,7 +1,10 @@
 package com.mulesoft.connector.einsteinai.internal.connection;
 
+import com.mulesoft.connector.einsteinai.internal.error.EinsteinErrorType;
 import com.mulesoft.connector.einsteinai.internal.modelsapi.helpers.RequestHelper;
+import org.apache.commons.lang3.StringUtils;
 import org.mule.runtime.extension.api.connectivity.oauth.ClientCredentialsState;
+import org.mule.runtime.extension.api.exception.ModuleException;
 import org.mule.runtime.http.api.client.HttpClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,6 +35,10 @@ public class CustomOAuthClientCredentialsConnection implements EinsteinConnectio
   @Override
   public void validate() {
     logger.info("Inside CustomOAuthClientCredentialsConnection validate");
+    if (StringUtils.isBlank(apiInstanceUrl)) {
+      logger.error("Missing Configuration. Api Instance Url is empty");
+      throw new ModuleException("Connection failed. Missing Configuration.", EinsteinErrorType.INVALID_CONNECTION);
+    }
   }
 
   public String getApiInstanceUrl() {
