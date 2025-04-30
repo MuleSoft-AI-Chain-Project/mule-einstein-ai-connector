@@ -5,6 +5,7 @@ import com.mulesoft.connector.einsteinai.api.metadata.ResponseParameters;
 import com.mulesoft.connector.einsteinai.internal.connection.EinsteinConnection;
 import com.mulesoft.connector.einsteinai.internal.modelsapi.helpers.RequestHelper;
 import com.mulesoft.connector.einsteinai.internal.modelsapi.models.ParamsModelDetails;
+import com.mulesoft.connector.einsteinai.internal.params.ReadTimeoutParams;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;
@@ -17,12 +18,13 @@ import org.mule.runtime.extension.api.exception.ModuleException;
 import org.mule.runtime.extension.api.runtime.process.CompletionCallback;
 
 import java.io.InputStream;
+import java.util.concurrent.TimeUnit;
 
 import static com.mulesoft.connector.einsteinai.internal.error.EinsteinErrorType.CHAT_FAILURE;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -47,13 +49,16 @@ class EinsteinGenerationOperationsTest {
   @Mock
   private CompletionCallback<InputStream, ResponseParameters> callbackMock2;
 
+  private ReadTimeoutParams readTimeout;
 
   private AutoCloseable closeable;
+
 
   @BeforeEach
   void setUp() {
     closeable = MockitoAnnotations.openMocks(this);
     einsteinGenerationOperations = new EinsteinGenerationOperations();
+    readTimeout = new ReadTimeoutParams(30, TimeUnit.SECONDS);
   }
 
   @AfterEach
@@ -68,10 +73,12 @@ class EinsteinGenerationOperationsTest {
     String dataset = "Dataset";
 
     when(connectionMock.getRequestHelper()).thenReturn(requestHelperMock);
+
     doThrow(new RuntimeException("Test exception"))
-        .when(requestHelperMock).executeGenerateText(anyString(), any(), any());
+        .when(requestHelperMock).executeGenerateText(anyString(), any(), eq(readTimeout), any());
 
     einsteinGenerationOperations.definePromptTemplate(connectionMock, template, instructions, dataset, paramDetailsMock,
+                                                      readTimeout,
                                                       callbackMock);
 
     // Verify that callback.error() was called with the expected ModuleException
@@ -89,9 +96,9 @@ class EinsteinGenerationOperationsTest {
     when(connectionMock.getRequestHelper()).thenReturn(requestHelperMock);
 
     doThrow(new RuntimeException("Test exception"))
-        .when(requestHelperMock).executeGenerateText(anyString(), any(), any());
+        .when(requestHelperMock).executeGenerateText(anyString(), any(), eq(readTimeout), any());
 
-    einsteinGenerationOperations.generateText(connectionMock, prompt, paramDetailsMock, callbackMock);
+    einsteinGenerationOperations.generateText(connectionMock, prompt, paramDetailsMock, readTimeout, callbackMock);
 
     verify(callbackMock).error(argThat(exception -> exception instanceof ModuleException &&
         exception.getMessage().equals("Error while generating text for prompt Test Prompt") &&
@@ -105,9 +112,9 @@ class EinsteinGenerationOperationsTest {
 
     doThrow(new RuntimeException("Test exception"))
         .when(requestHelperMock).generateChatFromMessages(
-                                                          anyString(), any(), any());
+                                                          anyString(), any(), eq(readTimeout), any());
 
-    einsteinGenerationOperations.generateChatFromMessages(connectionMock, messages, paramDetailsMock, callbackMock2);
+    einsteinGenerationOperations.generateChatFromMessages(connectionMock, messages, paramDetailsMock, readTimeout, callbackMock2);
 
     verify(callbackMock2).error(argThat(exception -> exception instanceof ModuleException &&
         exception.getMessage().equals("Error while generating the chat from messages Test Messages") &&

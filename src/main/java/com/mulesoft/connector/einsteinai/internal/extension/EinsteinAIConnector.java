@@ -1,13 +1,13 @@
 package com.mulesoft.connector.einsteinai.internal.extension;
 
-import com.mulesoft.connector.einsteinai.internal.connection.provider.CustomOauthClientCredentialsConnectionProvider;
+import com.mulesoft.connector.einsteinai.internal.config.EinsteinConfiguration;
 import com.mulesoft.connector.einsteinai.internal.error.EinsteinErrorType;
-import com.mulesoft.connector.einsteinai.internal.operation.EinsteinEmbeddingOperations;
-import com.mulesoft.connector.einsteinai.internal.operation.EinsteinGenerationOperations;
+import com.mulesoft.connector.einsteinai.internal.proxy.DefaultHttpProxyConfig;
+import com.mulesoft.connector.einsteinai.internal.proxy.HttpProxyConfig;
 import org.mule.runtime.api.meta.Category;
+import org.mule.runtime.extension.api.annotation.Configurations;
 import org.mule.runtime.extension.api.annotation.Extension;
-import org.mule.runtime.extension.api.annotation.Operations;
-import org.mule.runtime.extension.api.annotation.connectivity.ConnectionProviders;
+import org.mule.runtime.extension.api.annotation.SubTypeMapping;
 import org.mule.runtime.extension.api.annotation.dsl.xml.Xml;
 import org.mule.runtime.extension.api.annotation.error.ErrorTypes;
 import org.mule.runtime.extension.api.annotation.license.RequiresEnterpriseLicense;
@@ -25,11 +25,9 @@ import static org.mule.sdk.api.meta.JavaVersion.JAVA_11;
 @Xml(prefix = "ms-einstein-ai")
 @Extension(name = "Einstein AI", category = Category.SELECT)
 @ErrorTypes(EinsteinErrorType.class)
-@Operations({EinsteinEmbeddingOperations.class,
-    EinsteinGenerationOperations.class})
-@ConnectionProviders(CustomOauthClientCredentialsConnectionProvider.class)
+@SubTypeMapping(baseType = HttpProxyConfig.class, subTypes = {DefaultHttpProxyConfig.class})
+@Configurations(EinsteinConfiguration.class)
 @RequiresEnterpriseLicense(allowEvaluationLicense = true)
 @JavaVersionSupport({JAVA_8, JAVA_11, JAVA_17})
 public class EinsteinAIConnector {
-
 }
