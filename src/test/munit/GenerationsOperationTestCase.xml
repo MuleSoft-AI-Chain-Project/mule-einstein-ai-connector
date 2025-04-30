@@ -20,7 +20,7 @@
                 <munit:payload value='#[{"prompt": "How many continents are there in the world, give answer in one word only ?"}]'/>
             </munit:set-event>
             <ms-einstein-ai:chat-answer-prompt doc:name="Chat answer prompt" doc:id="5f8c7c79-dffe-4331-a5b4-30375baa66bc"
-                                            config-ref="Einstein_Config">
+                                            config-ref="Einstein_Config" readTimeout="60" readTimeoutUnit="SECONDS">
                 <ms-einstein-ai:prompt>#[payload.prompt]</ms-einstein-ai:prompt>
             </ms-einstein-ai:chat-answer-prompt>
         </munit:execution>
@@ -41,7 +41,7 @@
             </munit:set-event>
             <ms-einstein-ai:chat-generate-from-messages doc:name="Chat generate from messages"
                                                      doc:id="5f8c7c79-dffe-4331-a5b4-30375baa66bc"
-                                                     config-ref="Einstein_Config">
+                                                     config-ref="Einstein_Config" readTimeout="60" readTimeoutUnit="SECONDS">
                 <ms-einstein-ai:messages>#[write(payload.messages, 'application/json')]</ms-einstein-ai:messages>
             </ms-einstein-ai:chat-generate-from-messages>
         </munit:execution>
@@ -66,7 +66,7 @@
         <munit:execution>
             <logger message="Test AgentDefinePromptTemplate started" level="INFO"/>
             <ms-einstein-ai:agent-define-prompt-template doc:name="agent define prompt template"
-                                                      config-ref="Einstein_Config">
+                                                      config-ref="Einstein_Config" readTimeout="60" readTimeoutUnit="SECONDS">
                 <ms-einstein-ai:template>
                     #[payload.template]
                 </ms-einstein-ai:template>
@@ -86,6 +86,42 @@
         </munit:validation>
     </munit:test>
 
+    <munit:test name="ChatWithPromptWithTLS">
+        <munit:execution>
+            <logger message="Test ChatWithPrompt started" level="INFO"/>
+            <munit:set-event doc:name="Set Event" doc:id="1c45d3f8-1234-5678-9abc-01234def6789">
+                <munit:payload value='#[{"prompt": "How many continents are there in the world, give answer in one word only ?"}]'/>
+            </munit:set-event>
+            <ms-einstein-ai:chat-answer-prompt doc:name="Chat answer prompt" doc:id="5f8c7c79-dffe-4331-a5b4-30375baa66bc"
+                                               config-ref="Einstein_Config_TLS" readTimeout="60" readTimeoutUnit="SECONDS">
+                <ms-einstein-ai:prompt>#[payload.prompt]</ms-einstein-ai:prompt>
+            </ms-einstein-ai:chat-answer-prompt>
+        </munit:execution>
+        <munit:validation>
+            <munit-tools:assert-that expression="#[payload.response]"
+                                     is="#[MunitTools::matches('.*(7|seven|Seven).*')]"
+                                     doc:name="Assert Generated Text"/>
+        </munit:validation>
+    </munit:test>
+
+    <munit:test name="ChatWithPromptWithProxy">
+        <munit:execution>
+            <logger message="Test ChatWithPrompt started" level="INFO"/>
+            <munit:set-event doc:name="Set Event" doc:id="1c45d3f8-1234-5678-9abc-01234def6789">
+                <munit:payload value='#[{"prompt": "How many continents are there in the world, give answer in one word only ?"}]'/>
+            </munit:set-event>
+            <ms-einstein-ai:chat-answer-prompt doc:name="Chat answer prompt" doc:id="5f8c7c79-dffe-4331-a5b4-30375baa66bc"
+                                               config-ref="Einstein_Config_Proxy" readTimeout="60" readTimeoutUnit="SECONDS">
+                <ms-einstein-ai:prompt>#[payload.prompt]</ms-einstein-ai:prompt>
+            </ms-einstein-ai:chat-answer-prompt>
+        </munit:execution>
+        <munit:validation>
+            <munit-tools:assert-that expression="#[payload.response]"
+                                     is="#[MunitTools::matches('.*(7|seven|Seven).*')]"
+                                     doc:name="Assert Generated Text"/>
+        </munit:validation>
+    </munit:test>
+
     <munit:test name="EinsteinWithError" description="Test to validate error"
                 expectedErrorType="ms-einstein-ai:CONNECTIVITY">
         <munit:behavior>
@@ -101,6 +137,62 @@
             <logger message="Test EinsteinWithError started" level="INFO"/>
             <ms-einstein-ai:agent-define-prompt-template doc:name="agent define prompt template"
                                                       config-ref="Einstein_Config_Error">
+                <ms-einstein-ai:template>
+                    #[payload.template]
+                </ms-einstein-ai:template>
+                <ms-einstein-ai:instructions>
+                    #[payload.instructions]
+                </ms-einstein-ai:instructions>
+                <ms-einstein-ai:dataset>
+                    #[payload.dataset]
+                </ms-einstein-ai:dataset>
+            </ms-einstein-ai:agent-define-prompt-template>
+        </munit:execution>
+    </munit:test>
+
+    <munit:test name="EinsteinWithTLSError" description="Test to validate error"
+                expectedErrorType="ms-einstein-ai:CONNECTIVITY">
+        <munit:behavior>
+            <munit:set-event doc:name="Set Input" doc:id="01b3a666-0856-440c-a499-c1374896a95b">
+                <munit:payload value="#[output application/json --- {
+                'template': 'You are a customer satisfaction agent, who analyses the customer feedback in the dataset Answer via json output and add type for the result only with positive or negative as well as the complete answer.',
+                'instructions': 'If the customer feedback in the dataset is negative, open service satisfaction case and apologize to the customer. If the customer feedback in the dataset is positive, thank the customer and wish them a nice day. Don\'t repeat the feedback and be more direct starting the conversation with formal greetings.',
+                'dataset': 'It was horrible training last week'
+            }]" encoding="UTF-8" mediaType="application/json"/>
+            </munit:set-event>
+        </munit:behavior>
+        <munit:execution>
+            <logger message="Test EinsteinWithError started" level="INFO"/>
+            <ms-einstein-ai:agent-define-prompt-template doc:name="agent define prompt template"
+                                                         config-ref="Einstein_Config_Error_TLS">
+                <ms-einstein-ai:template>
+                    #[payload.template]
+                </ms-einstein-ai:template>
+                <ms-einstein-ai:instructions>
+                    #[payload.instructions]
+                </ms-einstein-ai:instructions>
+                <ms-einstein-ai:dataset>
+                    #[payload.dataset]
+                </ms-einstein-ai:dataset>
+            </ms-einstein-ai:agent-define-prompt-template>
+        </munit:execution>
+    </munit:test>
+
+    <munit:test name="Einstein_Config_Error_Proxy" description="Test to validate error"
+                expectedErrorType="ms-einstein-ai:CONNECTIVITY">
+        <munit:behavior>
+            <munit:set-event doc:name="Set Input" doc:id="01b3a666-0856-440c-a499-c1374896a95b">
+                <munit:payload value="#[output application/json --- {
+                'template': 'You are a customer satisfaction agent, who analyses the customer feedback in the dataset Answer via json output and add type for the result only with positive or negative as well as the complete answer.',
+                'instructions': 'If the customer feedback in the dataset is negative, open service satisfaction case and apologize to the customer. If the customer feedback in the dataset is positive, thank the customer and wish them a nice day. Don\'t repeat the feedback and be more direct starting the conversation with formal greetings.',
+                'dataset': 'It was horrible training last week'
+            }]" encoding="UTF-8" mediaType="application/json"/>
+            </munit:set-event>
+        </munit:behavior>
+        <munit:execution>
+            <logger message="Test EinsteinWithError started" level="INFO"/>
+            <ms-einstein-ai:agent-define-prompt-template doc:name="agent define prompt template"
+                                                         config-ref="Einstein_Config_Error_TLS">
                 <ms-einstein-ai:template>
                     #[payload.template]
                 </ms-einstein-ai:template>
