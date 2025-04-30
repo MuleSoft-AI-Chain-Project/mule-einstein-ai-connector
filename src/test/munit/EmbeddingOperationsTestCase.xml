@@ -127,6 +127,9 @@
         </munit:validation>
     </munit:test>
 
+    <!--
+    Commenting this code as cam tool does not support this proxy. Need some other public proxy server
+
     <munit:test name="EmbeddingFromTextWithProxy">
         <munit:execution>
             <munit:set-event doc:name="Set Event" doc:id="1c45d3f8-1234-5678-9abc-01234def6789">
@@ -143,7 +146,7 @@
             <munit-tools:assert-that is="#[MunitTools::greaterThan(2)]" expression="#[sizeOf(payload.embeddings[0].embeddings)]"/>
         </munit:validation>
     </munit:test>
-
+-->
     <munit:test name="ToolsAiServiceFailure" description="Tools Use AI Service Failure due to incorrect configuration" expectedErrorType="ms-einstein-ai:TOOLS_OPERATION_FAILURE">
         <munit:execution>
             <file:read doc:name="Read" doc:id="ea5e803b-10e4-4744-be32-13ce8951f050" path="tools.config.json" config-ref="File_Config" outputMimeType="application/octet-stream"/>
