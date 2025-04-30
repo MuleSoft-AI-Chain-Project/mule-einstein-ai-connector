@@ -6,6 +6,7 @@ import com.mulesoft.connector.einsteinai.internal.connection.EinsteinConnection;
 import com.mulesoft.connector.einsteinai.internal.error.provider.ChatErrorTypeProvider;
 import com.mulesoft.connector.einsteinai.internal.modelsapi.helpers.PromptTemplateHelper;
 import com.mulesoft.connector.einsteinai.internal.modelsapi.models.ParamsModelDetails;
+import com.mulesoft.connector.einsteinai.internal.params.ReadTimeoutParams;
 import org.mule.runtime.extension.api.annotation.Alias;
 import org.mule.runtime.extension.api.annotation.error.Throws;
 import org.mule.runtime.extension.api.annotation.metadata.fixed.OutputJsonType;
@@ -13,6 +14,7 @@ import org.mule.runtime.extension.api.annotation.param.Connection;
 import org.mule.runtime.extension.api.annotation.param.Content;
 import org.mule.runtime.extension.api.annotation.param.MediaType;
 import org.mule.runtime.extension.api.annotation.param.ParameterGroup;
+import org.mule.runtime.extension.api.annotation.param.display.Summary;
 import org.mule.runtime.extension.api.exception.ModuleException;
 import org.mule.runtime.extension.api.runtime.process.CompletionCallback;
 import org.slf4j.Logger;
@@ -43,11 +45,13 @@ public class EinsteinGenerationOperations {
                                    @Content String dataset,
                                    @ParameterGroup(
                                        name = "Additional properties") ParamsModelDetails paramDetails,
+                                   @ParameterGroup(
+                                       name = ReadTimeoutParams.READ_TIMEOUT_LABEL) @Summary("If defined, it overwrites values in configuration.") ReadTimeoutParams readTimeout,
                                    CompletionCallback<InputStream, EinsteinResponseAttributes> callback) {
     log.info("Executing agent defined prompt template operation.");
     try {
       String finalPromptTemplate = PromptTemplateHelper.definePromptTemplate(template, instructions, dataset);
-      connection.getRequestHelper().executeGenerateText(finalPromptTemplate, paramDetails, callback);
+      connection.getRequestHelper().executeGenerateText(finalPromptTemplate, paramDetails, readTimeout, callback);
     } catch (Exception e) {
       callback.error(new ModuleException("Error while generating prompt from template " + template + ", instructions "
           + instructions + ", dataset " + dataset, CHAT_FAILURE, e));
@@ -65,10 +69,12 @@ public class EinsteinGenerationOperations {
                            @Content String prompt,
                            @ParameterGroup(
                                name = "Additional properties") ParamsModelDetails paramDetails,
+                           @ParameterGroup(
+                               name = ReadTimeoutParams.READ_TIMEOUT_LABEL) @Summary("If defined, it overwrites values in configuration.") ReadTimeoutParams readTimeout,
                            CompletionCallback<InputStream, EinsteinResponseAttributes> callback) {
     log.info("Executing chat answer prompt operation.");
     try {
-      connection.getRequestHelper().executeGenerateText(prompt, paramDetails, callback);
+      connection.getRequestHelper().executeGenerateText(prompt, paramDetails, readTimeout, callback);
     } catch (Exception e) {
       callback.error(new ModuleException("Error while generating text for prompt " + prompt, CHAT_FAILURE, e));
     }
@@ -85,10 +91,12 @@ public class EinsteinGenerationOperations {
                                        @Content String messages,
                                        @ParameterGroup(
                                            name = "Additional properties") ParamsModelDetails paramDetails,
+                                       @ParameterGroup(
+                                           name = ReadTimeoutParams.READ_TIMEOUT_LABEL) @Summary("If defined, it overwrites values in configuration.") ReadTimeoutParams readTimeout,
                                        CompletionCallback<InputStream, ResponseParameters> callback) {
     log.info("Executing chat generate from message operation.");
     try {
-      connection.getRequestHelper().generateChatFromMessages(messages, paramDetails, callback);
+      connection.getRequestHelper().generateChatFromMessages(messages, paramDetails, readTimeout, callback);
     } catch (Exception e) {
       callback.error(new ModuleException("Error while generating the chat from messages " + messages, CHAT_FAILURE, e));
     }

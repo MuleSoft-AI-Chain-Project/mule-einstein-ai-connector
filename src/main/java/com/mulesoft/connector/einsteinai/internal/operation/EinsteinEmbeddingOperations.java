@@ -9,6 +9,7 @@ import com.mulesoft.connector.einsteinai.internal.modelsapi.models.ParamsEmbeddi
 import com.mulesoft.connector.einsteinai.internal.modelsapi.models.ParamsEmbeddingModelDetails;
 import com.mulesoft.connector.einsteinai.internal.modelsapi.models.ParamsModelDetails;
 import com.mulesoft.connector.einsteinai.internal.modelsapi.models.RAGParamsModelDetails;
+import com.mulesoft.connector.einsteinai.internal.params.ReadTimeoutParams;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.mule.runtime.extension.api.annotation.Alias;
@@ -18,6 +19,7 @@ import org.mule.runtime.extension.api.annotation.param.Connection;
 import org.mule.runtime.extension.api.annotation.param.Content;
 import org.mule.runtime.extension.api.annotation.param.MediaType;
 import org.mule.runtime.extension.api.annotation.param.ParameterGroup;
+import org.mule.runtime.extension.api.annotation.param.display.Summary;
 import org.mule.runtime.extension.api.exception.ModuleException;
 import org.mule.runtime.extension.api.runtime.operation.Result;
 import org.mule.runtime.extension.api.runtime.process.CompletionCallback;
@@ -49,10 +51,12 @@ public class EinsteinEmbeddingOperations {
                                         @Content String text,
                                         @ParameterGroup(
                                             name = "Additional properties") ParamsEmbeddingModelDetails paramDetails,
+                                        @ParameterGroup(
+                                            name = ReadTimeoutParams.READ_TIMEOUT_LABEL) @Summary("If defined, it overwrites values in configuration.") ReadTimeoutParams readTimeout,
                                         CompletionCallback<InputStream, ResponseParameters> callback) {
     log.info("Executing generate embedding from text operation.");
     try {
-      connection.getRequestHelper().generateEmbeddingFromText(text, paramDetails, callback);
+      connection.getRequestHelper().generateEmbeddingFromText(text, paramDetails, readTimeout, callback);
     } catch (Exception e) {
       callback.error(new ModuleException("Error while executing embedding generate from text operation",
                                          EMBEDDING_OPERATIONS_FAILURE, e));
@@ -69,10 +73,13 @@ public class EinsteinEmbeddingOperations {
   public Result<InputStream, Void> generateEmbeddingFromFile(@Connection EinsteinConnection connection,
                                                              @Content InputStream inputStream,
                                                              @ParameterGroup(
-                                                                 name = "Additional properties") ParamsEmbeddingDocumentDetails paramDetails) {
+                                                                 name = "Additional properties") ParamsEmbeddingDocumentDetails paramDetails,
+                                                             @ParameterGroup(
+                                                                 name = ReadTimeoutParams.READ_TIMEOUT_LABEL) @Summary("If defined, it overwrites values in configuration.") ReadTimeoutParams readTimeout) {
     log.info("Executing generate embedding from file operation.");
     try {
-      JSONArray response = connection.getRequestHelper().generateEmbeddingFromFileInputStream(inputStream, paramDetails);
+      JSONArray response =
+          connection.getRequestHelper().generateEmbeddingFromFileInputStream(inputStream, paramDetails, readTimeout);
 
       JSONObject jsonObject = new JSONObject();
       jsonObject.put("result", response);
@@ -94,13 +101,15 @@ public class EinsteinEmbeddingOperations {
   public Result<InputStream, Void> queryEmbeddingOnFiles(@Connection EinsteinConnection connection, @Content String prompt,
                                                          @Content InputStream inputStream,
                                                          @ParameterGroup(
-                                                             name = "Additional properties") ParamsEmbeddingDocumentDetails paramDetails) {
+                                                             name = "Additional properties") ParamsEmbeddingDocumentDetails paramDetails,
+                                                         @ParameterGroup(
+                                                             name = ReadTimeoutParams.READ_TIMEOUT_LABEL) @Summary("If defined, it overwrites values in configuration.") ReadTimeoutParams readTimeout) {
     log.info("Executing embedding adhoc file query operation.");
 
     try {
       JSONArray response = connection.getRequestHelper().embeddingFileQuery(prompt, inputStream, paramDetails.getModelApiName(),
                                                                             paramDetails.getFileType(),
-                                                                            paramDetails.getOptionType());
+                                                                            paramDetails.getOptionType(), readTimeout);
 
       JSONObject jsonObject = new JSONObject();
       jsonObject.put("result", response);
@@ -121,14 +130,17 @@ public class EinsteinEmbeddingOperations {
                                                                     @Content String prompt,
                                                                     @Content InputStream inputStream,
                                                                     @ParameterGroup(
-                                                                        name = "Additional properties") RAGParamsModelDetails paramDetails) {
+                                                                        name = "Additional properties") RAGParamsModelDetails paramDetails,
+                                                                    @ParameterGroup(
+                                                                        name = ReadTimeoutParams.READ_TIMEOUT_LABEL) @Summary("If defined, it overwrites values in configuration.") ReadTimeoutParams readTimeout) {
     log.info("Executing rag adhoc load document.");
     try {
       String content = connection.getRequestHelper().embeddingFileQuery(prompt, inputStream, paramDetails.getEmbeddingName(),
-                                                                        paramDetails.getFileType(), paramDetails.getOptionType())
+                                                                        paramDetails.getFileType(), paramDetails.getOptionType(),
+                                                                        readTimeout)
           .toString();
       InputStream responseStream = connection.getRequestHelper().executeRAG("data: " + content + ", question: " + prompt,
-                                                                            paramDetails);
+                                                                            paramDetails, readTimeout);
 
       return ResponseHelper.createEinsteinFormattedResponse(responseStream);
     } catch (Exception e) {
@@ -147,17 +159,20 @@ public class EinsteinEmbeddingOperations {
                                                                       @Content String prompt,
                                                                       @Content InputStream inputStream,
                                                                       @ParameterGroup(
-                                                                          name = "Additional properties") ParamsModelDetails paramDetails) {
+                                                                          name = "Additional properties") ParamsModelDetails paramDetails,
+                                                                      @ParameterGroup(
+                                                                          name = ReadTimeoutParams.READ_TIMEOUT_LABEL) @Summary("If defined, it overwrites values in configuration.") ReadTimeoutParams readTimeout) {
     log.info("Executing AI service tools operation.");
     try {
 
       String content =
-          connection.getRequestHelper().embeddingFileQuery(prompt, inputStream, MODELAPI_OPENAI_ADA_002, "text", "FULL")
+          connection.getRequestHelper()
+              .embeddingFileQuery(prompt, inputStream, MODELAPI_OPENAI_ADA_002, "text", "FULL", readTimeout)
               .toString();
       inputStream.reset();
       InputStream responseStream =
           connection.getRequestHelper().executeTools(prompt, "data: " + content + ", question: " + prompt,
-                                                     inputStream, paramDetails);
+                                                     inputStream, paramDetails, readTimeout);
 
       return ResponseHelper.createEinsteinFormattedResponse(responseStream);
     } catch (Exception e) {
