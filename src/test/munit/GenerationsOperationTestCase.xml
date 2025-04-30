@@ -103,6 +103,8 @@
                                      doc:name="Assert Generated Text"/>
         </munit:validation>
     </munit:test>
+<!--
+Commenting this code as cam tool does not support this proxy. Need some other public proxy server
 
     <munit:test name="ChatWithPromptWithProxy">
         <munit:execution>
@@ -121,7 +123,7 @@
                                      doc:name="Assert Generated Text"/>
         </munit:validation>
     </munit:test>
-
+-->
     <munit:test name="EinsteinWithError" description="Test to validate error"
                 expectedErrorType="ms-einstein-ai:CONNECTIVITY">
         <munit:behavior>
@@ -177,12 +179,14 @@
             </ms-einstein-ai:agent-define-prompt-template>
         </munit:execution>
     </munit:test>
+<!--
+Commenting this code as cam tool does not support this proxy. Need some other public proxy server
 
     <munit:test name="Einstein_Config_Error_Proxy" description="Test to validate error"
                 expectedErrorType="ms-einstein-ai:CONNECTIVITY">
         <munit:behavior>
             <munit:set-event doc:name="Set Input" doc:id="01b3a666-0856-440c-a499-c1374896a95b">
-                <munit:payload value="#[output application/json --- {
+                <munit:payload value="#[output application/json - {
                 'template': 'You are a customer satisfaction agent, who analyses the customer feedback in the dataset Answer via json output and add type for the result only with positive or negative as well as the complete answer.',
                 'instructions': 'If the customer feedback in the dataset is negative, open service satisfaction case and apologize to the customer. If the customer feedback in the dataset is positive, thank the customer and wish them a nice day. Don\'t repeat the feedback and be more direct starting the conversation with formal greetings.',
                 'dataset': 'It was horrible training last week'
@@ -205,5 +209,5 @@
             </ms-einstein-ai:agent-define-prompt-template>
         </munit:execution>
     </munit:test>
-
+-->
 </mule>

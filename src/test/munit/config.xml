@@ -41,6 +41,8 @@
             <ms-einstein-ai:oauth-client-credentials clientId="testId" clientSecret="testSecret" tokenUrl="${config.salesforce-org}" />
         </ms-einstein-ai:oauth-client-credentials-connection>
     </ms-einstein-ai:config>
+<!--
+Commenting this code as cam tool does not support this proxy. Need some other public proxy server
 
     <ms-einstein-ai:config name="Einstein_Config_Proxy" doc:name="Einstein Config With Proxy" doc:id="e2310b9c-aa50-406c-85ae-8bfa200c009a" >
         <ms-einstein-ai:oauth-client-credentials-connection connectionTimeout="20" connectionTimeoutUnit="SECONDS" connectionIdleTimeout="20" connectionIdleTimeoutUnit="SECONDS">
@@ -59,5 +61,6 @@
             <ms-einstein-ai:oauth-client-credentials clientId="${config.client-id}" clientSecret="${config.client-secret}" tokenUrl="${config.salesforce-org}" />
         </ms-einstein-ai:oauth-client-credentials-connection>
     </ms-einstein-ai:config>
+    -->
 
 </mule>
