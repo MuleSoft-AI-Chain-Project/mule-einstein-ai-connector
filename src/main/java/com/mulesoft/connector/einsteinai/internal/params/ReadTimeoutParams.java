@@ -66,12 +66,4 @@ public class ReadTimeoutParams {
   public int hashCode() {
     return Objects.hash(getReadTimeout(), getReadTimeoutUnit());
   }
-
-  @Override
-  public String toString() {
-    return "ReadTimeoutParams{" +
-        "readTimeout=" + readTimeout +
-        ", readTimeoutUnit=" + readTimeoutUnit +
-        '}';
-  }
 }
