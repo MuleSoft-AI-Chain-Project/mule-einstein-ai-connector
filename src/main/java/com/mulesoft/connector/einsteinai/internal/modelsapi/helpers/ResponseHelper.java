@@ -6,6 +6,7 @@ import com.mulesoft.connector.einsteinai.api.metadata.ResponseParameters;
 import com.mulesoft.connector.einsteinai.internal.modelsapi.dto.EinsteinChatFromMessagesResponseDTO;
 import com.mulesoft.connector.einsteinai.internal.modelsapi.dto.EinsteinEmbeddingResponseDTO;
 import com.mulesoft.connector.einsteinai.internal.modelsapi.dto.EinsteinGenerationResponseDTO;
+import com.mulesoft.connector.einsteinai.internal.modelsapi.dto.promptTemplate.EinsteinPromptTemplateGenerationsResponseDTO;
 import org.json.JSONObject;
 import org.mule.runtime.api.metadata.MediaType;
 import org.mule.runtime.extension.api.runtime.operation.Result;
@@ -76,6 +77,20 @@ public class ResponseHelper {
     return Result.<InputStream, ResponseParameters>builder()
         .output(toInputStream(jsonObject.toString(), StandardCharsets.UTF_8))
         .attributes(mapEmbeddingResponseAttributes(responseDTO))
+        .attributesMediaType(MediaType.APPLICATION_JAVA)
+        .mediaType(MediaType.APPLICATION_JSON)
+        .build();
+  }
+
+  public static Result<InputStream, ResponseParameters> createEinsteinPromptTemplateGenerationsResponse(InputStream response)
+      throws IOException {
+    EinsteinPromptTemplateGenerationsResponseDTO responseDTO =
+        objectMapper.readValue(response, EinsteinPromptTemplateGenerationsResponseDTO.class);
+    JSONObject jsonObject = new JSONObject(responseDTO);
+
+    return Result.<InputStream, ResponseParameters>builder()
+        .output(toInputStream(jsonObject.toString(), StandardCharsets.UTF_8))
+        .attributes(null)
         .attributesMediaType(MediaType.APPLICATION_JAVA)
         .mediaType(MediaType.APPLICATION_JSON)
         .build();

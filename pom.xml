@@ -6,7 +6,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.mulesoft.connectors</groupId>
     <artifactId>mule4-einstein-ai-connector</artifactId>
-    <version>1.2.0-SNAPSHOT</version>
+    <version>1.4.4-SNAPSHOT</version>
     <packaging>mule-extension</packaging>
     <name>Einstein AI Connector - Mule 4</name>
     <description>Secure and manage LLM integration via Einstein Trust Layer</description>
@@ -217,6 +217,7 @@
                 <extensions>true</extensions>
                 <configuration>
                     <argLines>
+                        <!--suppress UnresolvedMavenProperty -->
                         <argLine>
                             -javaagent:${settings.localRepository}/org/jacoco/org.jacoco.agent/${jacoco.version}/org.jacoco.agent-${jacoco.version}-runtime.jar=destfile=${session.executionRootDirectory}/target/jacoco.exec,includes=com/mulesoft/connector/einsteinai/**
                         </argLine>

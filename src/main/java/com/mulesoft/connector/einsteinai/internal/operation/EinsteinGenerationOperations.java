@@ -5,15 +5,19 @@ import com.mulesoft.connector.einsteinai.api.metadata.ResponseParameters;
 import com.mulesoft.connector.einsteinai.internal.connection.EinsteinConnection;
 import com.mulesoft.connector.einsteinai.internal.error.provider.ChatErrorTypeProvider;
 import com.mulesoft.connector.einsteinai.internal.modelsapi.helpers.PromptTemplateHelper;
+import com.mulesoft.connector.einsteinai.internal.modelsapi.models.EinsteinLlmAdditionalConfigInputRepresentation;
 import com.mulesoft.connector.einsteinai.internal.modelsapi.models.ParamsModelDetails;
+import com.mulesoft.connector.einsteinai.internal.modelsapi.models.PromptParamsDetails;
+import com.mulesoft.connector.einsteinai.internal.modelsapi.models.WrappedValue;
 import com.mulesoft.connector.einsteinai.internal.params.ReadTimeoutParams;
+import org.mule.runtime.api.meta.ExpressionSupport;
 import org.mule.runtime.extension.api.annotation.Alias;
+import org.mule.runtime.extension.api.annotation.Expression;
 import org.mule.runtime.extension.api.annotation.error.Throws;
 import org.mule.runtime.extension.api.annotation.metadata.fixed.OutputJsonType;
-import org.mule.runtime.extension.api.annotation.param.Connection;
-import org.mule.runtime.extension.api.annotation.param.Content;
-import org.mule.runtime.extension.api.annotation.param.MediaType;
-import org.mule.runtime.extension.api.annotation.param.ParameterGroup;
+import org.mule.runtime.extension.api.annotation.param.*;
+import org.mule.runtime.extension.api.annotation.param.display.DisplayName;
+import org.mule.runtime.extension.api.annotation.param.display.Placement;
 import org.mule.runtime.extension.api.annotation.param.display.Summary;
 import org.mule.runtime.extension.api.exception.ModuleException;
 import org.mule.runtime.extension.api.runtime.process.CompletionCallback;
@@ -21,8 +25,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.InputStream;
+import java.util.Map;
 
 import static com.mulesoft.connector.einsteinai.internal.error.EinsteinErrorType.CHAT_FAILURE;
+import static com.mulesoft.connector.einsteinai.internal.error.EinsteinErrorType.PROMPT_TEMPLATE_GENERATIONS;
 import static org.mule.runtime.extension.api.annotation.param.MediaType.APPLICATION_JSON;
 
 /**
@@ -99,6 +105,30 @@ public class EinsteinGenerationOperations {
       connection.getRequestHelper().generateChatFromMessages(messages, paramDetails, readTimeout, callback);
     } catch (Exception e) {
       callback.error(new ModuleException("Error while generating the chat from messages " + messages, CHAT_FAILURE, e));
+    }
+  }
+
+  @MediaType(value = APPLICATION_JSON, strict = false)
+  @Alias("Prompt-Template-Generations")
+  @Throws(ChatErrorTypeProvider.class)
+  @OutputJsonType(schema = "api/response/EinsteinPromptTemplateGenerationsResponse.json")
+  public void promptTemplateGenerations(@Connection EinsteinConnection connection,
+                                        @Expression(ExpressionSupport.SUPPORTED) @DisplayName("Prompt Template API Name") String promptTemplateDevName,
+                                        @Content @DisplayName("Input Params") Map<String, WrappedValue> promptInputParams,
+                                        @ParameterGroup(
+                                            name = "Additional properties") PromptParamsDetails paramsPromptDetails,
+                                        @ParameterGroup(
+                                            name = "Config Representation") EinsteinLlmAdditionalConfigInputRepresentation additionalConfigInputRepresentation,
+                                        @ParameterGroup(
+                                            name = ReadTimeoutParams.READ_TIMEOUT_LABEL) @Summary("If defined, it overwrites values in configuration.") ReadTimeoutParams readTimeout,
+                                        CompletionCallback<InputStream, ResponseParameters> callback) {
+    log.info("Executing chat generate from message operation.");
+    try {
+      connection.getRequestHelper().executePromptTemplateGenerations(promptInputParams, promptTemplateDevName,
+                                                                     paramsPromptDetails,
+                                                                     additionalConfigInputRepresentation, readTimeout, callback);
+    } catch (Exception e) {
+      callback.error(new ModuleException("Error while executing prompt template generations", PROMPT_TEMPLATE_GENERATIONS, e));
     }
   }
 }

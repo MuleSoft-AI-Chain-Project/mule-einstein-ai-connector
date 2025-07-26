@@ -7,10 +7,7 @@ import com.mulesoft.connector.einsteinai.internal.connection.EinsteinConnection;
 import com.mulesoft.connector.einsteinai.internal.error.EinsteinErrorType;
 import com.mulesoft.connector.einsteinai.internal.helpers.ThrowingFunction;
 import com.mulesoft.connector.einsteinai.internal.modelsapi.dto.EinsteinEmbeddingResponseDTO;
-import com.mulesoft.connector.einsteinai.internal.modelsapi.models.ParamsEmbeddingDocumentDetails;
-import com.mulesoft.connector.einsteinai.internal.modelsapi.models.ParamsEmbeddingModelDetails;
-import com.mulesoft.connector.einsteinai.internal.modelsapi.models.ParamsModelDetails;
-import com.mulesoft.connector.einsteinai.internal.modelsapi.models.RAGParamsModelDetails;
+import com.mulesoft.connector.einsteinai.internal.modelsapi.models.*;
 import com.mulesoft.connector.einsteinai.internal.params.ReadTimeoutParams;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
@@ -41,11 +38,7 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeoutException;
 import java.util.regex.Matcher;
@@ -60,14 +53,7 @@ import static com.mulesoft.connector.einsteinai.internal.helpers.EinsteinConstan
 import static com.mulesoft.connector.einsteinai.internal.helpers.HttpRequestHelper.handleHttpResponse;
 import static com.mulesoft.connector.einsteinai.internal.helpers.HttpRequestHelper.handleHttpResponseForTools;
 import static com.mulesoft.connector.einsteinai.internal.helpers.HttpRequestHelper.readResponseStream;
-import static com.mulesoft.connector.einsteinai.internal.modelsapi.helpers.ConstantUtil.EINSTEIN_GPT;
-import static com.mulesoft.connector.einsteinai.internal.modelsapi.helpers.ConstantUtil.URI_MODELS_API;
-import static com.mulesoft.connector.einsteinai.internal.modelsapi.helpers.ConstantUtil.URI_MODELS_API_CHAT_GENERATIONS;
-import static com.mulesoft.connector.einsteinai.internal.modelsapi.helpers.ConstantUtil.URI_MODELS_API_EMBEDDINGS;
-import static com.mulesoft.connector.einsteinai.internal.modelsapi.helpers.ConstantUtil.URI_MODELS_API_GENERATIONS;
-import static com.mulesoft.connector.einsteinai.internal.modelsapi.helpers.ConstantUtil.X_CLIENT_FEATURE_ID;
-import static com.mulesoft.connector.einsteinai.internal.modelsapi.helpers.ConstantUtil.X_SFDC_APP_CONTEXT;
-import static com.mulesoft.connector.einsteinai.internal.modelsapi.helpers.ConstantUtil.AI_PLATFORM_MODELS_CONNECTED_APP;
+import static com.mulesoft.connector.einsteinai.internal.modelsapi.helpers.ConstantUtil.*;
 
 public class RequestHelper {
 
@@ -87,11 +73,11 @@ public class RequestHelper {
     String payload = constructPayload(prompt, paramDetails.getLocale(), paramDetails.getProbability());
     InputStreamHttpEntity payloadStream = new InputStreamHttpEntity(new ByteArrayInputStream(payload.getBytes()));
 
-    executeEinsteinRequest(payloadStream, paramDetails.getModelApiName(),
-                           HTTP_METHOD_POST, URI_MODELS_API_GENERATIONS, readTimeout, callback,
+    executeEinsteinRequest(payloadStream, HTTP_METHOD_POST,
+                           URI_MODELS_API + paramDetails.getModelApiName() + URI_MODELS_API_GENERATIONS,
+                           readTimeout, callback,
                            ResponseHelper::createEinsteinFormattedResponse);
   }
-
 
   public void generateChatFromMessages(String messages, ParamsModelDetails paramDetails,
                                        ReadTimeoutParams readTimeout,
@@ -100,8 +86,9 @@ public class RequestHelper {
     String payload = constructPayloadWithMessages(messages, paramDetails);
     InputStreamHttpEntity payloadStream = new InputStreamHttpEntity(new ByteArrayInputStream(payload.getBytes()));
 
-    executeEinsteinRequest(payloadStream, paramDetails.getModelApiName(), HTTP_METHOD_POST,
-                           URI_MODELS_API_CHAT_GENERATIONS, readTimeout, callback,
+    executeEinsteinRequest(payloadStream, HTTP_METHOD_POST,
+                           URI_MODELS_API + paramDetails.getModelApiName() + URI_MODELS_API_CHAT_GENERATIONS,
+                           readTimeout, callback,
                            ResponseHelper::createEinsteinChatFromMessagesResponse);
   }
 
@@ -110,18 +97,33 @@ public class RequestHelper {
                                         CompletionCallback<InputStream, ResponseParameters> callback) {
     String payload = constructEmbeddingJsonPayload(text);
     InputStreamHttpEntity payloadStream = new InputStreamHttpEntity(new ByteArrayInputStream(payload.getBytes()));
-    executeEinsteinRequest(payloadStream, paramDetails.getModelApiName(), HTTP_METHOD_POST, URI_MODELS_API_EMBEDDINGS,
+    executeEinsteinRequest(payloadStream, HTTP_METHOD_POST,
+                           URI_MODELS_API + paramDetails.getModelApiName() + URI_MODELS_API_EMBEDDINGS,
                            readTimeout, callback,
                            ResponseHelper::createEinsteinEmbeddingResponse);
   }
 
-  private <A> void executeEinsteinRequest(InputStreamHttpEntity payload, String modelApiName, String httpMethod,
-                                          String uriModelsApiEmbeddings,
+  public void executePromptTemplateGenerations(Map<String, WrappedValue> promptInputParams, String promptTemplateDevName,
+                                               PromptParamsDetails paramPromptDetails,
+                                               EinsteinLlmAdditionalConfigInputRepresentation additionalConfigInputRepresentation,
+                                               ReadTimeoutParams readTimeout,
+                                               CompletionCallback<InputStream, ResponseParameters> callback) {
+
+    String payload =
+        constructPayloadForPromptTemplate(promptInputParams, paramPromptDetails, additionalConfigInputRepresentation);
+    InputStreamHttpEntity payloadStream = new InputStreamHttpEntity(new ByteArrayInputStream(payload.getBytes()));
+
+    executeEinsteinRequest(payloadStream, HTTP_METHOD_POST,
+                           URI_PROMPT_TEMPLATE + promptTemplateDevName + URI_MODELS_API_GENERATIONS, readTimeout, callback,
+                           ResponseHelper::createEinsteinPromptTemplateGenerationsResponse);
+  }
+
+  private <A> void executeEinsteinRequest(InputStreamHttpEntity payload, String httpMethod, String uriEinsteinPath,
                                           ReadTimeoutParams readTimeout,
                                           CompletionCallback<InputStream, A> callback,
                                           ThrowingFunction<InputStream, Result<InputStream, A>> responseConverter) {
 
-    String urlString = einsteinConnection.getApiInstanceUrl() + URI_MODELS_API + modelApiName + uriModelsApiEmbeddings;
+    String urlString = einsteinConnection.getApiInstanceUrl() + URI_EINSTEIN + uriEinsteinPath;
     log.debug("Einstein Request URL: {}", urlString);
 
     HttpRequestOptions httpRequestOptions = HttpRequestOptions.builder()
@@ -459,6 +461,18 @@ public class RequestHelper {
     jsonObject.put("tags", tags);
 
     return jsonObject.toString();
+  }
+
+  private String constructPayloadForPromptTemplate(Map<String, WrappedValue> promptInputParams,
+                                                   PromptParamsDetails parmaPromptDetails,
+                                                   EinsteinLlmAdditionalConfigInputRepresentation additionalConfigInputRepresentation) {
+    JSONObject root = new JSONObject(parmaPromptDetails);
+    JSONObject valueMap = new JSONObject(promptInputParams);
+
+    root.put("inputParams", valueMap);
+    root.put("additionalConfig", additionalConfigInputRepresentation);
+
+    return root.toString();
   }
 
   private String constructEmbeddingJsonPayload(String text) {
