@@ -8,7 +8,7 @@ public class ConstantUtil {
 
   public static final String URI_EINSTEIN = "/einstein";
   public static final String URI_PROMPT_TEMPLATE = "/prompt-templates/";
-  public static final String URI_MODELS_API = "/platform/v1/models/";
+  public static final String URI_MODELS_API = URI_EINSTEIN + "/platform/v1/models/";
   public static final String URI_MODELS_API_EMBEDDINGS = "/embeddings";
   public static final String URI_MODELS_API_GENERATIONS = "/generations";
   public static final String URI_MODELS_API_CHAT_GENERATIONS = "/chat-generations";

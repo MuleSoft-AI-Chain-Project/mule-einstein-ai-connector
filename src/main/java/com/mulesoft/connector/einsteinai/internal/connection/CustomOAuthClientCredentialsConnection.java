@@ -14,13 +14,16 @@ public class CustomOAuthClientCredentialsConnection implements EinsteinConnectio
   private static final Logger logger = LoggerFactory.getLogger(CustomOAuthClientCredentialsConnection.class);
 
   private final ClientCredentialsState clientCredentialsState;
+  private final String instanceUrl;
+
   private final String apiInstanceUrl;
   private final RequestHelper requestHelper;
   private final HttpClient httpClient;
 
   public CustomOAuthClientCredentialsConnection(ClientCredentialsState clientCredentialsState,
-                                                String apiInstanceUrl, HttpClient httpClient) {
+                                                String instanceUrl, String apiInstanceUrl, HttpClient httpClient) {
     this.clientCredentialsState = clientCredentialsState;
+    this.instanceUrl = instanceUrl;
     this.apiInstanceUrl = apiInstanceUrl;
     this.httpClient = httpClient;
     this.requestHelper = new RequestHelper(this);
@@ -40,6 +43,11 @@ public class CustomOAuthClientCredentialsConnection implements EinsteinConnectio
       throw new ModuleException("Connection failed. Missing Configuration: Empty API Instance URL",
                                 EinsteinErrorType.INVALID_CONNECTION);
     }
+  }
+
+  @Override
+  public String getInstanceUrl() {
+    return instanceUrl;
   }
 
   public String getApiInstanceUrl() {

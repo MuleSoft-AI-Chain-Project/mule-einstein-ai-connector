@@ -19,9 +19,9 @@ public class EinsteinPromptTemplateGenerationsResponseDTO {
   private String prompt;
   private String promptTemplateDevName;
   private String requestId;
-  private MaskContentRepresentationDTO requestMessages;
-  private MaskContentRepresentationDTO responseMessages;
-  private MaskDataRepresentationDTO slotsMaskingInformation;
+  private List<MaskContentRepresentationDTO> requestMessages;
+  private List<MaskContentRepresentationDTO> responseMessages;
+  private List<MaskDataRepresentationDTO> slotsMaskingInformation;
 
   public CitationDTO getCitations() {
     return citations;
@@ -59,15 +59,15 @@ public class EinsteinPromptTemplateGenerationsResponseDTO {
     return requestId;
   }
 
-  public MaskContentRepresentationDTO getRequestMessages() {
+  public List<MaskContentRepresentationDTO> getRequestMessages() {
     return requestMessages;
   }
 
-  public MaskContentRepresentationDTO getResponseMessages() {
+  public List<MaskContentRepresentationDTO> getResponseMessages() {
     return responseMessages;
   }
 
-  public MaskDataRepresentationDTO getSlotsMaskingInformation() {
+  public List<MaskDataRepresentationDTO> getSlotsMaskingInformation() {
     return slotsMaskingInformation;
   }
 }

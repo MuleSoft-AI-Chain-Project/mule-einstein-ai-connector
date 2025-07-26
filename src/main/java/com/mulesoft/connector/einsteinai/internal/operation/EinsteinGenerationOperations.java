@@ -4,6 +4,7 @@ import com.mulesoft.connector.einsteinai.api.metadata.EinsteinResponseAttributes
 import com.mulesoft.connector.einsteinai.api.metadata.ResponseParameters;
 import com.mulesoft.connector.einsteinai.internal.connection.EinsteinConnection;
 import com.mulesoft.connector.einsteinai.internal.error.provider.ChatErrorTypeProvider;
+import com.mulesoft.connector.einsteinai.internal.error.provider.PromptTemplateErrorTypeProvider;
 import com.mulesoft.connector.einsteinai.internal.modelsapi.helpers.PromptTemplateHelper;
 import com.mulesoft.connector.einsteinai.internal.modelsapi.models.EinsteinLlmAdditionalConfigInputRepresentation;
 import com.mulesoft.connector.einsteinai.internal.modelsapi.models.ParamsModelDetails;
@@ -110,7 +111,7 @@ public class EinsteinGenerationOperations {
 
   @MediaType(value = APPLICATION_JSON, strict = false)
   @Alias("Prompt-Template-Generations")
-  @Throws(ChatErrorTypeProvider.class)
+  @Throws(PromptTemplateErrorTypeProvider.class)
   @OutputJsonType(schema = "api/response/EinsteinPromptTemplateGenerationsResponse.json")
   public void promptTemplateGenerations(@Connection EinsteinConnection connection,
                                         @Expression(ExpressionSupport.SUPPORTED) @DisplayName("Prompt Template API Name") String promptTemplateDevName,

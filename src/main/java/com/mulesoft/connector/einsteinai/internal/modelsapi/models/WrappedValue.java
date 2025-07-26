@@ -1,6 +1,6 @@
 package com.mulesoft.connector.einsteinai.internal.modelsapi.models;
 
-import java.io.InputStream;
+import org.mule.runtime.api.metadata.TypedValue;
 
 public class WrappedValue {
 
@@ -8,5 +8,9 @@ public class WrappedValue {
 
   public Object getValue() {
     return value;
+  }
+
+  public void setValue(Object value) {
+    this.value = value;
   }
 }

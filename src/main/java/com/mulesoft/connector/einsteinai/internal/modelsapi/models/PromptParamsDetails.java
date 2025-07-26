@@ -1,6 +1,7 @@
 package com.mulesoft.connector.einsteinai.internal.modelsapi.models;
 
 import com.mulesoft.connector.einsteinai.internal.modelsapi.models.provider.CitationApiNameProvider;
+import org.json.JSONPropertyName;
 import org.mule.runtime.api.meta.ExpressionSupport;
 import org.mule.runtime.extension.api.annotation.Expression;
 import org.mule.runtime.extension.api.annotation.param.Optional;
@@ -45,6 +46,7 @@ public class PromptParamsDetails {
     return citationMode;
   }
 
+  @JSONPropertyName("isPreview")
   public Boolean getPreview() {
     return isPreview;
   }

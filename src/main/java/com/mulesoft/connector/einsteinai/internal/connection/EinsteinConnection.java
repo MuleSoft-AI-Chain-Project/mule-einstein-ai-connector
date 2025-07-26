@@ -10,6 +10,8 @@ import org.mule.runtime.http.api.client.HttpClient;
 // In future if we are adding new connection types, then common parameters of connection types will go here
 public interface EinsteinConnection extends ConnectorConnection {
 
+  String getInstanceUrl();
+
   String getApiInstanceUrl();
 
   RequestHelper getRequestHelper();

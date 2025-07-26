@@ -73,9 +73,8 @@ public class RequestHelper {
     String payload = constructPayload(prompt, paramDetails.getLocale(), paramDetails.getProbability());
     InputStreamHttpEntity payloadStream = new InputStreamHttpEntity(new ByteArrayInputStream(payload.getBytes()));
 
-    executeEinsteinRequest(payloadStream, HTTP_METHOD_POST,
-                           URI_MODELS_API + paramDetails.getModelApiName() + URI_MODELS_API_GENERATIONS,
-                           readTimeout, callback,
+    executeEinsteinRequest(payloadStream, paramDetails.getModelApiName(),
+                           HTTP_METHOD_POST, URI_MODELS_API_GENERATIONS, readTimeout, callback,
                            ResponseHelper::createEinsteinFormattedResponse);
   }
 
@@ -86,9 +85,8 @@ public class RequestHelper {
     String payload = constructPayloadWithMessages(messages, paramDetails);
     InputStreamHttpEntity payloadStream = new InputStreamHttpEntity(new ByteArrayInputStream(payload.getBytes()));
 
-    executeEinsteinRequest(payloadStream, HTTP_METHOD_POST,
-                           URI_MODELS_API + paramDetails.getModelApiName() + URI_MODELS_API_CHAT_GENERATIONS,
-                           readTimeout, callback,
+    executeEinsteinRequest(payloadStream, paramDetails.getModelApiName(), HTTP_METHOD_POST,
+                           URI_MODELS_API_CHAT_GENERATIONS, readTimeout, callback,
                            ResponseHelper::createEinsteinChatFromMessagesResponse);
   }
 
@@ -97,8 +95,7 @@ public class RequestHelper {
                                         CompletionCallback<InputStream, ResponseParameters> callback) {
     String payload = constructEmbeddingJsonPayload(text);
     InputStreamHttpEntity payloadStream = new InputStreamHttpEntity(new ByteArrayInputStream(payload.getBytes()));
-    executeEinsteinRequest(payloadStream, HTTP_METHOD_POST,
-                           URI_MODELS_API + paramDetails.getModelApiName() + URI_MODELS_API_EMBEDDINGS,
+    executeEinsteinRequest(payloadStream, paramDetails.getModelApiName(), HTTP_METHOD_POST, URI_MODELS_API_EMBEDDINGS,
                            readTimeout, callback,
                            ResponseHelper::createEinsteinEmbeddingResponse);
   }
@@ -111,19 +108,22 @@ public class RequestHelper {
 
     String payload =
         constructPayloadForPromptTemplate(promptInputParams, paramPromptDetails, additionalConfigInputRepresentation);
+    log.debug("Einstein Request Body: {}", payload);
     InputStreamHttpEntity payloadStream = new InputStreamHttpEntity(new ByteArrayInputStream(payload.getBytes()));
 
-    executeEinsteinRequest(payloadStream, HTTP_METHOD_POST,
-                           URI_PROMPT_TEMPLATE + promptTemplateDevName + URI_MODELS_API_GENERATIONS, readTimeout, callback,
-                           ResponseHelper::createEinsteinPromptTemplateGenerationsResponse);
+    executeEinsteinSalesforceRequest(payloadStream, HTTP_METHOD_POST,
+                                     URI_PROMPT_TEMPLATE + promptTemplateDevName + URI_MODELS_API_GENERATIONS, readTimeout,
+                                     callback,
+                                     ResponseHelper::createEinsteinPromptTemplateGenerationsResponse);
   }
 
-  private <A> void executeEinsteinRequest(InputStreamHttpEntity payload, String httpMethod, String uriEinsteinPath,
+  private <A> void executeEinsteinRequest(InputStreamHttpEntity payload, String modelApiName, String httpMethod,
+                                          String uriModelsApiEmbeddings,
                                           ReadTimeoutParams readTimeout,
                                           CompletionCallback<InputStream, A> callback,
                                           ThrowingFunction<InputStream, Result<InputStream, A>> responseConverter) {
 
-    String urlString = einsteinConnection.getApiInstanceUrl() + URI_EINSTEIN + uriEinsteinPath;
+    String urlString = einsteinConnection.getApiInstanceUrl() + URI_MODELS_API + modelApiName + uriModelsApiEmbeddings;
     log.debug("Einstein Request URL: {}", urlString);
 
     HttpRequestOptions httpRequestOptions = HttpRequestOptions.builder()
@@ -141,6 +141,33 @@ public class RequestHelper {
 
     completableFuture
         .whenComplete((response, exception) -> handleHttpResponse(response, exception, EinsteinErrorType.MODELS_API_ERROR,
+                                                                  callback, responseConverter));
+  }
+
+  private <A> void executeEinsteinSalesforceRequest(InputStreamHttpEntity payload, String httpMethod, String uriEinsteinPath,
+                                                    ReadTimeoutParams readTimeout,
+                                                    CompletionCallback<InputStream, A> callback,
+                                                    ThrowingFunction<InputStream, Result<InputStream, A>> responseConverter) {
+
+    String urlString = einsteinConnection.getInstanceUrl() + "/services/data/v63.0" + URI_EINSTEIN + uriEinsteinPath;
+    log.debug("Einstein Request URL: {}", urlString);
+
+    HttpRequestOptions httpRequestOptions = HttpRequestOptions.builder()
+        .responseTimeout((int) readTimeout.getReadTimeoutUnit().toMillis(readTimeout.getReadTimeout())).build();
+
+    CompletableFuture<HttpResponse> completableFuture = einsteinConnection.getHttpClient().sendAsync(
+                                                                                                     buildRequest(urlString,
+                                                                                                                  einsteinConnection
+                                                                                                                      .getAccessToken(),
+                                                                                                                  httpMethod,
+                                                                                                                  payload != null
+                                                                                                                      ? payload
+                                                                                                                      : new EmptyHttpEntity()),
+                                                                                                     httpRequestOptions);
+
+    completableFuture
+        .whenComplete((response, exception) -> handleHttpResponse(response, exception,
+                                                                  EinsteinErrorType.PROMPT_TEMPLATE_GENERATIONS,
                                                                   callback, responseConverter));
   }
 
@@ -467,10 +494,13 @@ public class RequestHelper {
                                                    PromptParamsDetails parmaPromptDetails,
                                                    EinsteinLlmAdditionalConfigInputRepresentation additionalConfigInputRepresentation) {
     JSONObject root = new JSONObject(parmaPromptDetails);
-    JSONObject valueMap = new JSONObject(promptInputParams);
+    JSONObject valueMap = new JSONObject();
+    JSONObject valueMapInputParams = new JSONObject(promptInputParams);
+    JSONObject additionalConfig = new JSONObject(additionalConfigInputRepresentation);
 
     root.put("inputParams", valueMap);
-    root.put("additionalConfig", additionalConfigInputRepresentation);
+    valueMap.put("valueMap", valueMapInputParams);
+    root.put("additionalConfig", additionalConfig);
 
     return root.toString();
   }
