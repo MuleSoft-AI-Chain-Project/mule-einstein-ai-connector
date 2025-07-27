@@ -1,5 +1,6 @@
 package com.mulesoft.connector.einsteinai.internal.operation;
 
+import com.mulesoft.connector.einsteinai.api.metadata.EinsteinPromptTemplateGenerationsResponseAttributes;
 import com.mulesoft.connector.einsteinai.api.metadata.EinsteinResponseAttributes;
 import com.mulesoft.connector.einsteinai.api.metadata.ResponseParameters;
 import com.mulesoft.connector.einsteinai.internal.connection.EinsteinConnection;
@@ -122,7 +123,7 @@ public class EinsteinGenerationOperations {
                                             name = "Config Representation") EinsteinLlmAdditionalConfigInputRepresentation additionalConfigInputRepresentation,
                                         @ParameterGroup(
                                             name = ReadTimeoutParams.READ_TIMEOUT_LABEL) @Summary("If defined, it overwrites values in configuration.") ReadTimeoutParams readTimeout,
-                                        CompletionCallback<InputStream, ResponseParameters> callback) {
+                                        CompletionCallback<InputStream, EinsteinPromptTemplateGenerationsResponseAttributes> callback) {
     log.info("Executing chat generate from message operation.");
     try {
       connection.getRequestHelper().executePromptTemplateGenerations(promptInputParams, promptTemplateDevName,

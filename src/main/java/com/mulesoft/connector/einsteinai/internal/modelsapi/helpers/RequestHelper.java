@@ -1,6 +1,7 @@
 package com.mulesoft.connector.einsteinai.internal.modelsapi.helpers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mulesoft.connector.einsteinai.api.metadata.EinsteinPromptTemplateGenerationsResponseAttributes;
 import com.mulesoft.connector.einsteinai.api.metadata.EinsteinResponseAttributes;
 import com.mulesoft.connector.einsteinai.api.metadata.ResponseParameters;
 import com.mulesoft.connector.einsteinai.internal.connection.EinsteinConnection;
@@ -104,7 +105,7 @@ public class RequestHelper {
                                                PromptParamsDetails paramPromptDetails,
                                                EinsteinLlmAdditionalConfigInputRepresentation additionalConfigInputRepresentation,
                                                ReadTimeoutParams readTimeout,
-                                               CompletionCallback<InputStream, ResponseParameters> callback) {
+                                               CompletionCallback<InputStream, EinsteinPromptTemplateGenerationsResponseAttributes> callback) {
 
     String payload =
         constructPayloadForPromptTemplate(promptInputParams, paramPromptDetails, additionalConfigInputRepresentation);

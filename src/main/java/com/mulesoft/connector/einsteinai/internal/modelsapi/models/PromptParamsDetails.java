@@ -18,8 +18,8 @@ public class PromptParamsDetails {
   @Optional(defaultValue = "off")
   @DisplayName("Citation Mode")
   @Placement(tab = Placement.ADVANCED_TAB)
-  @OfValues(CitationApiNameProvider.class)
-  private String citationMode;
+  // @OfValues(CitationApiNameProvider.class)
+  private CitationApiNameEnum citationMode;
 
   @Parameter
   @Expression(ExpressionSupport.SUPPORTED)
@@ -42,7 +42,7 @@ public class PromptParamsDetails {
   @Placement(tab = Placement.ADVANCED_TAB)
   private Map<String, WrappedValue> tags;
 
-  public String getCitationMode() {
+  public CitationApiNameEnum getCitationMode() {
     return citationMode;
   }
 

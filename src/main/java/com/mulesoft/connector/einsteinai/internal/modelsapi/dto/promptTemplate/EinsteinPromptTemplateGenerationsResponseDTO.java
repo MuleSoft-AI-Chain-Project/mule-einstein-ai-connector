@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.mulesoft.connector.einsteinai.internal.modelsapi.dto.WrappedMapDTO;
 import com.mulesoft.connector.einsteinai.internal.modelsapi.dto.promptTemplate.einsteinLlm.generation.CitationDTO;
 import com.mulesoft.connector.einsteinai.internal.modelsapi.dto.promptTemplate.einsteinLlm.generation.Item;
+import org.json.JSONPropertyName;
 
 import java.util.List;
 
@@ -39,6 +40,7 @@ public class EinsteinPromptTemplateGenerationsResponseDTO {
     return generations;
   }
 
+  @JSONPropertyName("isSummarized")
   public Boolean getSummarized() {
     return isSummarized;
   }

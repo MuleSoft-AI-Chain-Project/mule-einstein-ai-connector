@@ -1,6 +1,7 @@
 package com.mulesoft.connector.einsteinai.internal.modelsapi.helpers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mulesoft.connector.einsteinai.api.metadata.EinsteinPromptTemplateGenerationsResponseAttributes;
 import com.mulesoft.connector.einsteinai.api.metadata.EinsteinResponseAttributes;
 import com.mulesoft.connector.einsteinai.api.metadata.ResponseParameters;
 import com.mulesoft.connector.einsteinai.internal.modelsapi.dto.EinsteinChatFromMessagesResponseDTO;
@@ -10,6 +11,8 @@ import com.mulesoft.connector.einsteinai.internal.modelsapi.dto.promptTemplate.E
 import org.json.JSONObject;
 import org.mule.runtime.api.metadata.MediaType;
 import org.mule.runtime.extension.api.runtime.operation.Result;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -22,6 +25,8 @@ public class ResponseHelper {
   private ResponseHelper() {
     throw new IllegalStateException("Utility class");
   }
+
+  private static final Logger log = LoggerFactory.getLogger(RequestHelper.class);
 
   private static final ObjectMapper objectMapper = ObjectMapperProvider.create();
 
@@ -82,15 +87,15 @@ public class ResponseHelper {
         .build();
   }
 
-  public static Result<InputStream, ResponseParameters> createEinsteinPromptTemplateGenerationsResponse(InputStream response)
+  public static Result<InputStream, EinsteinPromptTemplateGenerationsResponseAttributes> createEinsteinPromptTemplateGenerationsResponse(InputStream response)
       throws IOException {
     EinsteinPromptTemplateGenerationsResponseDTO responseDTO =
         objectMapper.readValue(response, EinsteinPromptTemplateGenerationsResponseDTO.class);
     JSONObject jsonObject = new JSONObject(responseDTO);
 
-    return Result.<InputStream, ResponseParameters>builder()
+    return Result.<InputStream, EinsteinPromptTemplateGenerationsResponseAttributes>builder()
         .output(toInputStream(jsonObject.toString(), StandardCharsets.UTF_8))
-        .attributes(null)
+        .attributes(mapResponseAttributes(responseDTO))
         .attributesMediaType(MediaType.APPLICATION_JAVA)
         .mediaType(MediaType.APPLICATION_JSON)
         .build();
@@ -106,6 +111,28 @@ public class ResponseHelper {
                                           responseDTO.getGeneration() != null ? responseDTO.getGeneration().getParameters()
                                               : null,
                                           responseDTO.getParameters());
+  }
+
+  private static EinsteinPromptTemplateGenerationsResponseAttributes mapResponseAttributes(EinsteinPromptTemplateGenerationsResponseDTO responseDTO) {
+
+    return new EinsteinPromptTemplateGenerationsResponseAttributes(
+                                                                   responseDTO
+                                                                       .getRequestId(),
+                                                                   responseDTO.getSummarized(),
+                                                                   responseDTO
+                                                                       .getParameters(),
+                                                                   responseDTO
+                                                                       .getPrompt(),
+                                                                   responseDTO
+                                                                       .getPromptTemplateDevName(),
+                                                                   responseDTO
+                                                                       .getCitations(),
+                                                                   responseDTO
+                                                                       .getRequestMessages(),
+                                                                   responseDTO
+                                                                       .getResponseMessages(),
+                                                                   responseDTO
+                                                                       .getSlotsMaskingInformation());
   }
 
   private static ResponseParameters mapEmbeddingResponseAttributes(EinsteinEmbeddingResponseDTO responseDTO) {
