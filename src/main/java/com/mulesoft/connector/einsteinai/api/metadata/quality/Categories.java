@@ -5,8 +5,13 @@ import java.util.Objects;
 
 public class Categories implements Serializable {
 
-  private String categoryName;
-  private String score;
+  private final String categoryName;
+  private final String score;
+
+  public Categories(String categoryName, String score) {
+    this.categoryName = categoryName;
+    this.score = score;
+  }
 
   public String getCategoryName() {
     return categoryName;

@@ -10,7 +10,7 @@ public class GenerationsChatFromMessagesDTO {
   private String id;
   private String role;
   private String content;
-  private ContentQuality contentQuality;
+  private ContentQualityDTO contentQuality;
   private GenerationParameters parameters;
 
   public String getId() {
@@ -18,6 +18,10 @@ public class GenerationsChatFromMessagesDTO {
   }
 
   public ContentQuality getContentQuality() {
+    return contentQuality != null ? contentQuality.toContentQuality() : null;
+  }
+
+  public ContentQualityDTO getContentQualityDTO() {
     return contentQuality;
   }
 

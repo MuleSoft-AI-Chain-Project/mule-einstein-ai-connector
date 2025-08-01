@@ -9,7 +9,7 @@ public class GenerationDTO {
 
   private String id;
   private String generatedText;
-  private ContentQuality contentQuality;
+  private ContentQualityDTO contentQuality;
   private GenerationParameters parameters;
 
   public String getId() {
@@ -21,6 +21,10 @@ public class GenerationDTO {
   }
 
   public ContentQuality getContentQuality() {
+    return contentQuality != null ? contentQuality.toContentQuality() : null;
+  }
+
+  public ContentQualityDTO getContentQualityDTO() {
     return contentQuality;
   }
 
