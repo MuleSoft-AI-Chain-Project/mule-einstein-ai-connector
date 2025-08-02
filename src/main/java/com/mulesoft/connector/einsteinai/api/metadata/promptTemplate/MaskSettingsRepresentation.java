@@ -4,15 +4,15 @@ import java.util.Objects;
 
 public class MaskSettingsRepresentation {
 
-  private boolean enableModeration;
+  private Boolean enableModeration;
 
   public MaskSettingsRepresentation() {}
 
-  public MaskSettingsRepresentation(boolean enableModeration) {
+  public MaskSettingsRepresentation(Boolean enableModeration) {
     this.enableModeration = enableModeration;
   }
 
-  public boolean isEnableModeration() {
+  public Boolean getEnableModeration() {
     return enableModeration;
   }
 
@@ -23,7 +23,7 @@ public class MaskSettingsRepresentation {
     if (o == null || getClass() != o.getClass())
       return false;
     MaskSettingsRepresentation that = (MaskSettingsRepresentation) o;
-    return enableModeration == that.enableModeration;
+    return Objects.equals(enableModeration, that.enableModeration);
   }
 
   @Override

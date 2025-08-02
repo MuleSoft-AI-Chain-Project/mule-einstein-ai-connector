@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mulesoft.connector.einsteinai.api.metadata.EinsteinPromptTemplateGenerationsResponseAttributes;
 import com.mulesoft.connector.einsteinai.api.metadata.EinsteinResponseAttributes;
 import com.mulesoft.connector.einsteinai.api.metadata.ResponseParameters;
+import com.mulesoft.connector.einsteinai.internal.config.EinsteinConfiguration;
 import com.mulesoft.connector.einsteinai.internal.connection.EinsteinConnection;
 import com.mulesoft.connector.einsteinai.internal.error.EinsteinErrorType;
 import com.mulesoft.connector.einsteinai.internal.helpers.HttpRequestHelper;
@@ -32,6 +33,7 @@ import org.mule.runtime.http.api.domain.entity.HttpEntity;
 import org.mule.runtime.http.api.domain.entity.InputStreamHttpEntity;
 import org.mule.runtime.http.api.domain.message.request.HttpRequest;
 import org.mule.runtime.http.api.domain.message.response.HttpResponse;
+import org.mule.sdk.api.annotation.param.Config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
@@ -114,6 +116,7 @@ public class RequestHelper {
 
     executeEinsteinSalesforceRequest(payloadStream, HTTP_METHOD_POST,
                                      URI_PROMPT_TEMPLATE + promptTemplateDevName + URI_MODELS_API_GENERATIONS, readTimeout,
+                                     einsteinConnection.getApiVersion(),
                                      callback,
                                      ResponseHelper::createEinsteinPromptTemplateGenerationsResponse);
   }
@@ -147,10 +150,11 @@ public class RequestHelper {
 
   private <A> void executeEinsteinSalesforceRequest(InputStreamHttpEntity payload, String httpMethod, String uriEinsteinPath,
                                                     ReadTimeoutParams readTimeout,
+                                                    String apiVersion,
                                                     CompletionCallback<InputStream, A> callback,
                                                     ThrowingFunction<InputStream, Result<InputStream, A>> responseConverter) {
 
-    String urlString = einsteinConnection.getInstanceUrl() + "/services/data/v63.0" + URI_EINSTEIN + uriEinsteinPath;
+    String urlString = einsteinConnection.getInstanceUrl() + "/services/data/v" + apiVersion + URI_EINSTEIN + uriEinsteinPath;
     log.debug("Einstein Request URL: {}", urlString);
 
     HttpRequestOptions httpRequestOptions = HttpRequestOptions.builder()

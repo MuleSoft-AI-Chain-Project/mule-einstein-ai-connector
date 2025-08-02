@@ -146,16 +146,16 @@ class EinsteinGenerationOperationsTest {
     when(connectionMock.getRequestHelper()).thenReturn(requestHelperMock);
 
     doThrow(new RuntimeException("Test exception"))
-            .when(requestHelperMock).generateChatFromMessages(
-                    anyString(), any(), eq(readTimeout), any());
+        .when(requestHelperMock).generateChatFromMessages(
+                                                          anyString(), any(), eq(readTimeout), any());
 
     einsteinGenerationOperations.promptTemplateGenerations(connectionMock, promptTemplateDevName, promptInputParams,
-            promptParamsDetails,einsteinAdditionConfig,
-            readTimeout, callbackMock3);
+                                                           promptParamsDetails, einsteinAdditionConfig,
+                                                           readTimeout, callbackMock3);
 
     verify(callbackMock3).error(argThat(exception -> exception instanceof ModuleException &&
-            exception.getMessage().equals("Error while generating prompt template generations") &&
-            ((ModuleException) exception).getType() == PROMPT_TEMPLATE_GENERATIONS));
+        exception.getMessage().equals("Error while generating prompt template generations") &&
+        ((ModuleException) exception).getType() == PROMPT_TEMPLATE_GENERATIONS));
   }
 }
 

@@ -83,6 +83,12 @@ public class EinsteinConnectionParameterGroup {
   @Summary("Protocol to use for communication")
   private TlsContextFactory tlsContextFactory;
 
+  @Parameter
+  @Optional(defaultValue = "64.0")
+  @DisplayName("Salesforce API Version")
+  @Summary("The Salesforce API version")
+  private String apiVersion;
+
   public Integer getMaxConnections() {
     return maxConnections;
   }
@@ -113,5 +119,9 @@ public class EinsteinConnectionParameterGroup {
 
   public Integer getConnectionIdleTimeoutInMillis() {
     return Math.toIntExact(connectionIdleTimeoutUnit.toMillis(connectionIdleTimeout));
+  }
+
+  public String getApiVersion() {
+    return apiVersion;
   }
 }

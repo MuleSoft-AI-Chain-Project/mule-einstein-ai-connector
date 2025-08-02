@@ -12,6 +12,8 @@ public interface EinsteinConnection extends ConnectorConnection {
 
   String getInstanceUrl();
 
+  String getApiVersion();
+
   String getApiInstanceUrl();
 
   RequestHelper getRequestHelper();

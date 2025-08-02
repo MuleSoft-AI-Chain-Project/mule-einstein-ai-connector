@@ -80,7 +80,9 @@ public class CustomOauthClientCredentialsConnectionProvider implements EinsteinC
   public EinsteinConnection connect() {
     log.info("Inside CustomOauthClientCredentialsConnectionProvider connect, instanceUrl = {}, apiInstanceUrl = {},",
              instance_url, apiInstanceUrl);
-    return new CustomOAuthClientCredentialsConnection(clientCredentialsState, instance_url, apiInstanceUrl, httpClient);
+    return new CustomOAuthClientCredentialsConnection(clientCredentialsState, instance_url,
+                                                      einsteinConnectionParameterGroup.getApiVersion(), apiInstanceUrl,
+                                                      httpClient);
   }
 
   public void setClientCredentialsState(ClientCredentialsState clientCredentialsState) {

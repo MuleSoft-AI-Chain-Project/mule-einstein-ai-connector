@@ -9,6 +9,7 @@ import com.mulesoft.connector.einsteinai.internal.modelsapi.dto.EinsteinEmbeddin
 import com.mulesoft.connector.einsteinai.internal.modelsapi.dto.EinsteinGenerationResponseDTO;
 import com.mulesoft.connector.einsteinai.internal.modelsapi.dto.promptTemplate.EinsteinPromptRecordCollectionDTO;
 import com.mulesoft.connector.einsteinai.internal.modelsapi.dto.promptTemplate.EinsteinPromptTemplateGenerationsResponseDTO;
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.mule.runtime.api.metadata.MediaType;
 import org.mule.runtime.extension.api.runtime.operation.Result;
@@ -95,10 +96,10 @@ public class ResponseHelper {
       throws IOException {
     EinsteinPromptTemplateGenerationsResponseDTO responseDTO =
         objectMapper.readValue(response, EinsteinPromptTemplateGenerationsResponseDTO.class);
-    JSONObject jsonObject = new JSONObject(responseDTO);
+    JSONArray jsonArray = new JSONArray(responseDTO.getGenerations());
 
     return Result.<InputStream, EinsteinPromptTemplateGenerationsResponseAttributes>builder()
-        .output(toInputStream(jsonObject.toString(), StandardCharsets.UTF_8))
+        .output(toInputStream(jsonArray.toString(), StandardCharsets.UTF_8))
         .attributes(mapResponseAttributes(responseDTO))
         .attributesMediaType(MediaType.APPLICATION_JAVA)
         .mediaType(MediaType.APPLICATION_JSON)

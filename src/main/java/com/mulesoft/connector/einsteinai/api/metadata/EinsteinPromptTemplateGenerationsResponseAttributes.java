@@ -27,7 +27,6 @@ public class EinsteinPromptTemplateGenerationsResponseAttributes implements Seri
                                                              List<MaskDataRepresentation> slotsMaskingInformation) {
     this.requestId = requestId;
     this.isSummarized = isSummarized;
-    System.out.println(this.isSummarized);
     this.parameters = parameters;
     this.prompt = prompt;
     this.promptTemplateDevName = promptTemplateDevName;
@@ -35,7 +34,6 @@ public class EinsteinPromptTemplateGenerationsResponseAttributes implements Seri
     this.requestMessages = requestMessages;
     this.responseMessages = responseMessages;
     this.slotsMaskingInformation = slotsMaskingInformation;
-    System.out.println(this.slotsMaskingInformation.get(0));
   }
 
   public String getRequestId() {
