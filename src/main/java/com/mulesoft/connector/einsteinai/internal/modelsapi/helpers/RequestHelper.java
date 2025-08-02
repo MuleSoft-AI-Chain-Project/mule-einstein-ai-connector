@@ -6,8 +6,10 @@ import com.mulesoft.connector.einsteinai.api.metadata.EinsteinResponseAttributes
 import com.mulesoft.connector.einsteinai.api.metadata.ResponseParameters;
 import com.mulesoft.connector.einsteinai.internal.connection.EinsteinConnection;
 import com.mulesoft.connector.einsteinai.internal.error.EinsteinErrorType;
+import com.mulesoft.connector.einsteinai.internal.helpers.HttpRequestHelper;
 import com.mulesoft.connector.einsteinai.internal.helpers.ThrowingFunction;
 import com.mulesoft.connector.einsteinai.internal.modelsapi.dto.EinsteinEmbeddingResponseDTO;
+import com.mulesoft.connector.einsteinai.internal.modelsapi.dto.promptTemplate.EinsteinPromptRecordCollectionDTO;
 import com.mulesoft.connector.einsteinai.internal.modelsapi.models.*;
 import com.mulesoft.connector.einsteinai.internal.params.ReadTimeoutParams;
 import org.apache.tika.exception.TikaException;
@@ -38,6 +40,7 @@ import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -47,10 +50,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static com.mulesoft.connector.einsteinai.internal.helpers.EinsteinConstantUtil.AUTHORIZATION;
-import static com.mulesoft.connector.einsteinai.internal.helpers.EinsteinConstantUtil.CONTENT_TYPE_APPLICATION_JSON;
-import static com.mulesoft.connector.einsteinai.internal.helpers.EinsteinConstantUtil.CONTENT_TYPE_STRING;
-import static com.mulesoft.connector.einsteinai.internal.helpers.EinsteinConstantUtil.HTTP_METHOD_POST;
+import static com.mulesoft.connector.einsteinai.internal.helpers.EinsteinConstantUtil.*;
 import static com.mulesoft.connector.einsteinai.internal.helpers.HttpRequestHelper.handleHttpResponse;
 import static com.mulesoft.connector.einsteinai.internal.helpers.HttpRequestHelper.handleHttpResponseForTools;
 import static com.mulesoft.connector.einsteinai.internal.helpers.HttpRequestHelper.readResponseStream;
@@ -246,6 +246,52 @@ public class RequestHelper {
     List<String> results = rankAndPrintResults(corpus, similarityScores);
     // Convert results list to a JSONArray
     return new JSONArray(results);
+  }
+
+  public List<String> getPromptTemplates(ReadTimeoutParams readTimeout) throws IOException, TimeoutException {
+    String urlString = einsteinConnection.getInstanceUrl() + "/services/data/v63.0" + URI_EINSTEIN + URI_PROMPT_TEMPLATE;
+    HttpRequestOptions httpRequestOptions = HttpRequestOptions.builder()
+        .responseTimeout((int) readTimeout.getReadTimeoutUnit().toMillis(readTimeout.getReadTimeout())).build();
+    List<String> result = new ArrayList<>();
+    MultiMap<String, String> queryParams = new MultiMap<>();
+    Boolean hasMoreRecords;
+    Integer offset = 0;
+    queryParams.put("isActive", "true");
+    queryParams.put("pageLimit", "50");
+    queryParams.put("offset", offset.toString());
+
+    do {
+      EinsteinPromptRecordCollectionDTO response;
+      HttpResponse httpResponse = this.einsteinConnection.getHttpClient().send(
+                                                                               buildRequest(urlString,
+                                                                                            einsteinConnection
+                                                                                                .getAccessToken(),
+                                                                                            HTTP_METHOD_GET,
+
+                                                                                            new EmptyHttpEntity()),
+                                                                               httpRequestOptions);
+
+      if (httpResponse.getStatusCode() >= HttpURLConnection.HTTP_OK
+          && httpResponse.getStatusCode() < HttpURLConnection.HTTP_MULT_CHOICE) {
+        response = ResponseHelper.promptTemplates(httpResponse.getEntity().getContent());
+        response.getPromptRecords()
+            .stream()
+            .forEach(einsteinPromptRecordDTO -> result
+                .add((String) einsteinPromptRecordDTO.getFields().get("DeveloperName").getValue()));
+        hasMoreRecords = response.isHasMoreRecords();
+        if (hasMoreRecords) {
+          offset += 50;
+          queryParams.replace("offset", offset.toString());
+          log.debug("The request has more records, offset: {}", offset);
+        }
+      } else {
+        String errorMessage = HttpRequestHelper.readErrorStream(httpResponse.getEntity().getContent());
+        log.error("Error in HTTP request. Response code: {}, message: {}", httpResponse.getStatusCode(), errorMessage);
+        break;
+      }
+    } while (hasMoreRecords);
+
+    return result;
   }
 
   private List<String> createCorpusListFromStream(InputStream inputStream, String fileType, String splitOption)
@@ -590,6 +636,17 @@ public class RequestHelper {
         .uri(url)
         .headers(addConnectionHeaders(accessToken))
         .method(httpMethod)
+        .entity(httpEntity)
+        .build();
+  }
+
+  private HttpRequest buildRequest(String url, String accessToken, String httpMethod, MultiMap<String, String> queryParams,
+                                   HttpEntity httpEntity) {
+    return HttpRequest.builder()
+        .uri(url)
+        .headers(addConnectionHeaders(accessToken))
+        .method(httpMethod)
+        .queryParams(queryParams)
         .entity(httpEntity)
         .build();
   }

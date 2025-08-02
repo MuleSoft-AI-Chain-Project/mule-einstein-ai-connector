@@ -7,6 +7,7 @@ import com.mulesoft.connector.einsteinai.api.metadata.ResponseParameters;
 import com.mulesoft.connector.einsteinai.internal.modelsapi.dto.EinsteinChatFromMessagesResponseDTO;
 import com.mulesoft.connector.einsteinai.internal.modelsapi.dto.EinsteinEmbeddingResponseDTO;
 import com.mulesoft.connector.einsteinai.internal.modelsapi.dto.EinsteinGenerationResponseDTO;
+import com.mulesoft.connector.einsteinai.internal.modelsapi.dto.promptTemplate.EinsteinPromptRecordCollectionDTO;
 import com.mulesoft.connector.einsteinai.internal.modelsapi.dto.promptTemplate.EinsteinPromptTemplateGenerationsResponseDTO;
 import org.json.JSONObject;
 import org.mule.runtime.api.metadata.MediaType;
@@ -17,6 +18,9 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
 import static org.apache.commons.io.IOUtils.toInputStream;
 
@@ -99,6 +103,14 @@ public class ResponseHelper {
         .attributesMediaType(MediaType.APPLICATION_JAVA)
         .mediaType(MediaType.APPLICATION_JSON)
         .build();
+  }
+
+  public static EinsteinPromptRecordCollectionDTO promptTemplates(InputStream response)
+      throws IOException {
+    EinsteinPromptRecordCollectionDTO responseDTO =
+        objectMapper.readValue(response, EinsteinPromptRecordCollectionDTO.class);
+
+    return responseDTO;
   }
 
   private static EinsteinResponseAttributes mapResponseAttributes(EinsteinGenerationResponseDTO responseDTO) {

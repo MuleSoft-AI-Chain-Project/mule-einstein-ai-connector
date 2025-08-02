@@ -6,6 +6,8 @@ public class EinsteinConstantUtil {
     throw new IllegalStateException("Utility class");
   }
 
+  public static final String HTTP_METHOD_GET = "GET";
+
   public static final String HTTP_METHOD_POST = "POST";
 
   public static final String CONTENT_TYPE_STRING = "Content-Type";

@@ -11,6 +11,7 @@ import com.mulesoft.connector.einsteinai.internal.modelsapi.models.EinsteinLlmAd
 import com.mulesoft.connector.einsteinai.internal.modelsapi.models.ParamsModelDetails;
 import com.mulesoft.connector.einsteinai.internal.modelsapi.models.PromptParamsDetails;
 import com.mulesoft.connector.einsteinai.internal.modelsapi.models.WrappedValue;
+import com.mulesoft.connector.einsteinai.internal.modelsapi.models.provider.PromptTemplateDevNameProvider;
 import com.mulesoft.connector.einsteinai.internal.params.ReadTimeoutParams;
 import org.mule.runtime.api.meta.ExpressionSupport;
 import org.mule.runtime.extension.api.annotation.Alias;
@@ -19,8 +20,8 @@ import org.mule.runtime.extension.api.annotation.error.Throws;
 import org.mule.runtime.extension.api.annotation.metadata.fixed.OutputJsonType;
 import org.mule.runtime.extension.api.annotation.param.*;
 import org.mule.runtime.extension.api.annotation.param.display.DisplayName;
-import org.mule.runtime.extension.api.annotation.param.display.Placement;
 import org.mule.runtime.extension.api.annotation.param.display.Summary;
+import org.mule.runtime.extension.api.annotation.values.OfValues;
 import org.mule.runtime.extension.api.exception.ModuleException;
 import org.mule.runtime.extension.api.runtime.process.CompletionCallback;
 import org.slf4j.Logger;
@@ -115,7 +116,7 @@ public class EinsteinGenerationOperations {
   @Throws(PromptTemplateErrorTypeProvider.class)
   @OutputJsonType(schema = "api/response/EinsteinPromptTemplateGenerationsResponse.json")
   public void promptTemplateGenerations(@Connection EinsteinConnection connection,
-                                        @Expression(ExpressionSupport.SUPPORTED) @DisplayName("Prompt Template API Name") String promptTemplateDevName,
+                                        @Expression(ExpressionSupport.SUPPORTED) @DisplayName("Prompt Template API Name") @OfValues(PromptTemplateDevNameProvider.class) String promptTemplateDevName,
                                         @Content @DisplayName("Input Params") Map<String, WrappedValue> promptInputParams,
                                         @ParameterGroup(
                                             name = "Additional properties") PromptParamsDetails paramsPromptDetails,

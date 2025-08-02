@@ -1,8 +1,10 @@
 package com.mulesoft.connector.einsteinai.internal.modelsapi.dto.promptTemplate;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.mulesoft.connector.einsteinai.internal.modelsapi.dto.WrappedMapDTO;
-import com.mulesoft.connector.einsteinai.internal.modelsapi.dto.promptTemplate.einsteinLlm.generation.CitationDTO;
+import com.mulesoft.connector.einsteinai.api.metadata.WrappedMap;
+import com.mulesoft.connector.einsteinai.api.metadata.promptTemplate.MaskContentRepresentation;
+import com.mulesoft.connector.einsteinai.api.metadata.promptTemplate.MaskDataRepresentation;
+import com.mulesoft.connector.einsteinai.api.metadata.promptTemplate.einsteinLlm.generation.Citation;
 import com.mulesoft.connector.einsteinai.internal.modelsapi.dto.promptTemplate.einsteinLlm.generation.Item;
 import org.json.JSONPropertyName;
 
@@ -11,20 +13,20 @@ import java.util.List;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class EinsteinPromptTemplateGenerationsResponseDTO {
 
-  private CitationDTO citations;
+  private Citation citations;
   private List<AttachmentDTO> fileData;
   private List<GenerationsErrorDTO> generationErrors;
   private List<Item> generations;
   private Boolean isSummarized;
-  private WrappedMapDTO parameters;
+  private WrappedMap parameters;
   private String prompt;
   private String promptTemplateDevName;
   private String requestId;
-  private List<MaskContentRepresentationDTO> requestMessages;
-  private List<MaskContentRepresentationDTO> responseMessages;
-  private List<MaskDataRepresentationDTO> slotsMaskingInformation;
+  private List<MaskContentRepresentation> requestMessages;
+  private List<MaskContentRepresentation> responseMessages;
+  private List<MaskDataRepresentation> slotsMaskingInformation;
 
-  public CitationDTO getCitations() {
+  public Citation getCitations() {
     return citations;
   }
 
@@ -45,7 +47,7 @@ public class EinsteinPromptTemplateGenerationsResponseDTO {
     return isSummarized;
   }
 
-  public WrappedMapDTO getParameters() {
+  public WrappedMap getParameters() {
     return parameters;
   }
 
@@ -61,15 +63,15 @@ public class EinsteinPromptTemplateGenerationsResponseDTO {
     return requestId;
   }
 
-  public List<MaskContentRepresentationDTO> getRequestMessages() {
+  public List<MaskContentRepresentation> getRequestMessages() {
     return requestMessages;
   }
 
-  public List<MaskContentRepresentationDTO> getResponseMessages() {
+  public List<MaskContentRepresentation> getResponseMessages() {
     return responseMessages;
   }
 
-  public List<MaskDataRepresentationDTO> getSlotsMaskingInformation() {
+  public List<MaskDataRepresentation> getSlotsMaskingInformation() {
     return slotsMaskingInformation;
   }
 }

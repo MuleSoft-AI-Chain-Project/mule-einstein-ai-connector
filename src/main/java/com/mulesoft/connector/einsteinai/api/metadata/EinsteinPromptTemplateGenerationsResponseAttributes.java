@@ -1,9 +1,8 @@
 package com.mulesoft.connector.einsteinai.api.metadata;
 
-import com.mulesoft.connector.einsteinai.internal.modelsapi.dto.WrappedMapDTO;
-import com.mulesoft.connector.einsteinai.internal.modelsapi.dto.promptTemplate.MaskContentRepresentationDTO;
-import com.mulesoft.connector.einsteinai.internal.modelsapi.dto.promptTemplate.MaskDataRepresentationDTO;
-import com.mulesoft.connector.einsteinai.internal.modelsapi.dto.promptTemplate.einsteinLlm.generation.CitationDTO;
+import com.mulesoft.connector.einsteinai.api.metadata.promptTemplate.MaskContentRepresentation;
+import com.mulesoft.connector.einsteinai.api.metadata.promptTemplate.MaskDataRepresentation;
+import com.mulesoft.connector.einsteinai.api.metadata.promptTemplate.einsteinLlm.generation.Citation;
 
 import java.io.Serializable;
 import java.util.List;
@@ -13,19 +12,19 @@ public class EinsteinPromptTemplateGenerationsResponseAttributes implements Seri
 
   private final String requestId;
   private final Boolean isSummarized;
-  private final WrappedMapDTO parameters;
+  private final WrappedMap parameters;
   private final String prompt;
   private final String promptTemplateDevName;
-  private final CitationDTO citations;
-  private final List<MaskContentRepresentationDTO> requestMessages;
-  private final List<MaskContentRepresentationDTO> responseMessages;
-  private final List<MaskDataRepresentationDTO> slotsMaskingInformation;
+  private final Citation citations;
+  private final List<MaskContentRepresentation> requestMessages;
+  private final List<MaskContentRepresentation> responseMessages;
+  private final List<MaskDataRepresentation> slotsMaskingInformation;
 
-  public EinsteinPromptTemplateGenerationsResponseAttributes(String requestId, Boolean isSummarized, WrappedMapDTO parameters,
-                                                             String prompt, String promptTemplateDevName, CitationDTO citations,
-                                                             List<MaskContentRepresentationDTO> requestMessages,
-                                                             List<MaskContentRepresentationDTO> responseMessages,
-                                                             List<MaskDataRepresentationDTO> slotsMaskingInformation) {
+  public EinsteinPromptTemplateGenerationsResponseAttributes(String requestId, Boolean isSummarized, WrappedMap parameters,
+                                                             String prompt, String promptTemplateDevName, Citation citations,
+                                                             List<MaskContentRepresentation> requestMessages,
+                                                             List<MaskContentRepresentation> responseMessages,
+                                                             List<MaskDataRepresentation> slotsMaskingInformation) {
     this.requestId = requestId;
     this.isSummarized = isSummarized;
     System.out.println(this.isSummarized);
@@ -47,7 +46,7 @@ public class EinsteinPromptTemplateGenerationsResponseAttributes implements Seri
     return isSummarized;
   }
 
-  public WrappedMapDTO getParameters() {
+  public WrappedMap getParameters() {
     return parameters;
   }
 
@@ -59,19 +58,19 @@ public class EinsteinPromptTemplateGenerationsResponseAttributes implements Seri
     return promptTemplateDevName;
   }
 
-  public CitationDTO getCitations() {
+  public Citation getCitations() {
     return citations;
   }
 
-  public List<MaskContentRepresentationDTO> getRequestMessages() {
+  public List<MaskContentRepresentation> getRequestMessages() {
     return requestMessages;
   }
 
-  public List<MaskContentRepresentationDTO> getResponseMessages() {
+  public List<MaskContentRepresentation> getResponseMessages() {
     return responseMessages;
   }
 
-  public List<MaskDataRepresentationDTO> getSlotsMaskingInformation() {
+  public List<MaskDataRepresentation> getSlotsMaskingInformation() {
     return slotsMaskingInformation;
   }
 
