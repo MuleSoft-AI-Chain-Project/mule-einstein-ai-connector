@@ -60,6 +60,9 @@ public class CustomOauthClientCredentialsConnectionProvider implements EinsteinC
 
   private HttpClient httpClient;
 
+  @OAuthCallbackValue(expression = "#[payload.instance_url]")
+  private String instance_url;
+
   @OAuthCallbackValue(expression = "#[payload.api_instance_url]")
   private String apiInstanceUrl;
 
@@ -75,8 +78,11 @@ public class CustomOauthClientCredentialsConnectionProvider implements EinsteinC
 
   @Override
   public EinsteinConnection connect() {
-    log.info("Inside CustomOauthClientCredentialsConnectionProvider connect, apiInstanceUrl = {},", apiInstanceUrl);
-    return new CustomOAuthClientCredentialsConnection(clientCredentialsState, apiInstanceUrl, httpClient);
+    log.info("Inside CustomOauthClientCredentialsConnectionProvider connect, instanceUrl = {}, apiInstanceUrl = {},",
+             instance_url, apiInstanceUrl);
+    return new CustomOAuthClientCredentialsConnection(clientCredentialsState, instance_url,
+                                                      einsteinConnectionParameterGroup.getApiVersion(), apiInstanceUrl,
+                                                      httpClient);
   }
 
   public void setClientCredentialsState(ClientCredentialsState clientCredentialsState) {

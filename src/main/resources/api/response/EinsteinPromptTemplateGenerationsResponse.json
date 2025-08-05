@@ -1,0 +1,193 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "EinsteinPromptTemplateGenerations",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "citations": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/EinsteinLLMGenerationCitation" }
+    },
+    "fileData": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/EinsteinPromptTemplateAttachment" }
+    },
+    "generationErrors": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/EinsteinPromptTemplateGenerationsError" }
+    },
+    "generations": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/EinsteinLLMGenerationItem" }
+    },
+    "isSummarized": { "type": "boolean" },
+    "parameters": { "$ref": "#/definitions/WrappedMap" },
+    "prompt": { "type": "string" },
+    "promptTemplateDevName": { "type": "string" },
+    "requestId": { "type": "string" },
+    "requestMessages": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/EinsteinPromptTemplateMaskContentRepresentation" }
+    },
+    "responseMessages": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/EinsteinPromptTemplateMaskContentRepresentation" }
+    },
+    "slotsMaskingInformation": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/EinsteinPromptTemplateMaskDataRepresentation" }
+    }
+  },
+  "definitions": {
+    "EinsteinLLMGenerationCitation": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "citedReferences": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/EinsteinLLMGenerationGenAICitedReference" }
+        },
+        "sourceReferences": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/EinsteinLLMGenAISourceReference" }
+        }
+      }
+    },
+    "EinsteinLLMGenerationGenAICitedReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "link": { "type": "string" },
+        "sourceObjectApiName": { "type": "string" },
+        "sourceObjectRecordId": { "type": "string" }
+      }
+    },
+    "EinsteinLLMGenAISourceReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "contents": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/EinsteinLLMGenerationGenAISourceContentInfo" }
+        },
+        "metadata": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/EinsteinLLMGenerationGenAISourceReferenceInfo" }
+        }
+      }
+    },
+    "EinsteinLLMGenerationGenAISourceContentInfo": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "content": { "type": "string" },
+        "fieldName": { "type": "string" },
+        "objectName": { "type": "string" }
+      }
+    },
+    "EinsteinLLMGenerationGenAISourceReferenceInfo": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "link": { "type": "string" },
+        "sourceObjectApiName": { "type": "string" },
+        "sourceObjectRecordId": { "type": "string" }
+      }
+    },
+    "EinsteinPromptTemplateAttachment": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "fileExtension": { "type": "string" },
+        "id": { "type": "string" },
+        "latestPublishedVersion": { "type": "string" },
+        "title": { "type": "string" }
+      }
+    },
+    "EinsteinPromptTemplateGenerationsError": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "errorMessage": { "type": "string" },
+        "httpErrorCode": { "type": "string" },
+        "localizedErrorMessage": { "type": "string" },
+        "messageCode": { "type": "string" }
+      }
+    },
+    "EinsteinLLMGenerationItem": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "contentQualityRepresentation": {
+          "$ref": "#/definitions/EinsteinLLMGenerationsContentQualityRepresentation"
+        },
+        "parameters": { "type": "string" },
+        "responseId": { "type": "string" },
+        "safetyScoreRepresentation": {
+          "$ref": "#/definitions/EinsteinLLMGenerationsSafetyScore"
+        },
+        "text": { "type": "string" }
+      }
+    },
+    "EinsteinLLMGenerationsContentQualityRepresentation": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "isToxicityDetected": { "type": "boolean" }
+      }
+    },
+    "EinsteinLLMGenerationsSafetyScore": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "hateScore": { "type": "number" },
+        "physicalScore": { "type": "number" },
+        "profanityScore": { "type": "number" },
+        "safetyScore": { "type": "number" },
+        "sexualScore": { "type": "number" },
+        "toxicityScore": { "type": "number" },
+        "violenceScore": { "type": "number" }
+      }
+    },
+    "WrappedMap": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "wrappedMap": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    },
+    "EinsteinPromptTemplateMaskContentRepresentation": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "content": { "type": "string" },
+        "moderationSettings": {
+          "$ref": "#/definitions/EinsteinPromptTemplateMaskSettingsRepresentation"
+        },
+        "role": { "type": "string" }
+      }
+    },
+    "EinsteinPromptTemplateMaskSettingsRepresentation": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enableModeration": { "type": "boolean" }
+      }
+    },
+    "EinsteinPromptTemplateMaskDataRepresentation": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "originalValue": { "type": "string" },
+        "placeHolder": { "type": "string" },
+        "recognizers": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    }
+  }
+}

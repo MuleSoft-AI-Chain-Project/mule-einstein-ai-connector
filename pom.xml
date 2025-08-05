@@ -43,6 +43,12 @@
             <organization>Salesforce</organization>
             <organizationUrl>https://www.salesforce.com</organizationUrl>
         </developer>
+        <developer>
+            <name>Guillermo Rodriguez Gonzalez</name>
+            <email>guillermo.rguez99@gmail.com</email>
+            <organization></organization>
+            <organizationUrl></organizationUrl>
+        </developer>
     </developers>
 
     <parent>
@@ -217,6 +223,7 @@
                 <extensions>true</extensions>
                 <configuration>
                     <argLines>
+                        <!--suppress UnresolvedMavenProperty -->
                         <argLine>
                             -javaagent:${settings.localRepository}/org/jacoco/org.jacoco.agent/${jacoco.version}/org.jacoco.agent-${jacoco.version}-runtime.jar=destfile=${session.executionRootDirectory}/target/jacoco.exec,includes=com/mulesoft/connector/einsteinai/**
                         </argLine>

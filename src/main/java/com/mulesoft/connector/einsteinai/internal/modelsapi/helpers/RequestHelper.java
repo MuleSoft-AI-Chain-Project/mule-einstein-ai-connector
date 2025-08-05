@@ -1,16 +1,17 @@
 package com.mulesoft.connector.einsteinai.internal.modelsapi.helpers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mulesoft.connector.einsteinai.api.metadata.EinsteinPromptTemplateGenerationsResponseAttributes;
 import com.mulesoft.connector.einsteinai.api.metadata.EinsteinResponseAttributes;
 import com.mulesoft.connector.einsteinai.api.metadata.ResponseParameters;
+import com.mulesoft.connector.einsteinai.internal.config.EinsteinConfiguration;
 import com.mulesoft.connector.einsteinai.internal.connection.EinsteinConnection;
 import com.mulesoft.connector.einsteinai.internal.error.EinsteinErrorType;
+import com.mulesoft.connector.einsteinai.internal.helpers.HttpRequestHelper;
 import com.mulesoft.connector.einsteinai.internal.helpers.ThrowingFunction;
 import com.mulesoft.connector.einsteinai.internal.modelsapi.dto.EinsteinEmbeddingResponseDTO;
-import com.mulesoft.connector.einsteinai.internal.modelsapi.models.ParamsEmbeddingDocumentDetails;
-import com.mulesoft.connector.einsteinai.internal.modelsapi.models.ParamsEmbeddingModelDetails;
-import com.mulesoft.connector.einsteinai.internal.modelsapi.models.ParamsModelDetails;
-import com.mulesoft.connector.einsteinai.internal.modelsapi.models.RAGParamsModelDetails;
+import com.mulesoft.connector.einsteinai.internal.modelsapi.dto.promptTemplate.EinsteinPromptRecordCollectionDTO;
+import com.mulesoft.connector.einsteinai.internal.modelsapi.models.*;
 import com.mulesoft.connector.einsteinai.internal.params.ReadTimeoutParams;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
@@ -32,6 +33,7 @@ import org.mule.runtime.http.api.domain.entity.HttpEntity;
 import org.mule.runtime.http.api.domain.entity.InputStreamHttpEntity;
 import org.mule.runtime.http.api.domain.message.request.HttpRequest;
 import org.mule.runtime.http.api.domain.message.response.HttpResponse;
+import org.mule.sdk.api.annotation.param.Config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
@@ -40,12 +42,9 @@ import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeoutException;
 import java.util.regex.Matcher;
@@ -53,21 +52,11 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static com.mulesoft.connector.einsteinai.internal.helpers.EinsteinConstantUtil.AUTHORIZATION;
-import static com.mulesoft.connector.einsteinai.internal.helpers.EinsteinConstantUtil.CONTENT_TYPE_APPLICATION_JSON;
-import static com.mulesoft.connector.einsteinai.internal.helpers.EinsteinConstantUtil.CONTENT_TYPE_STRING;
-import static com.mulesoft.connector.einsteinai.internal.helpers.EinsteinConstantUtil.HTTP_METHOD_POST;
+import static com.mulesoft.connector.einsteinai.internal.helpers.EinsteinConstantUtil.*;
 import static com.mulesoft.connector.einsteinai.internal.helpers.HttpRequestHelper.handleHttpResponse;
 import static com.mulesoft.connector.einsteinai.internal.helpers.HttpRequestHelper.handleHttpResponseForTools;
 import static com.mulesoft.connector.einsteinai.internal.helpers.HttpRequestHelper.readResponseStream;
-import static com.mulesoft.connector.einsteinai.internal.modelsapi.helpers.ConstantUtil.EINSTEIN_GPT;
-import static com.mulesoft.connector.einsteinai.internal.modelsapi.helpers.ConstantUtil.URI_MODELS_API;
-import static com.mulesoft.connector.einsteinai.internal.modelsapi.helpers.ConstantUtil.URI_MODELS_API_CHAT_GENERATIONS;
-import static com.mulesoft.connector.einsteinai.internal.modelsapi.helpers.ConstantUtil.URI_MODELS_API_EMBEDDINGS;
-import static com.mulesoft.connector.einsteinai.internal.modelsapi.helpers.ConstantUtil.URI_MODELS_API_GENERATIONS;
-import static com.mulesoft.connector.einsteinai.internal.modelsapi.helpers.ConstantUtil.X_CLIENT_FEATURE_ID;
-import static com.mulesoft.connector.einsteinai.internal.modelsapi.helpers.ConstantUtil.X_SFDC_APP_CONTEXT;
-import static com.mulesoft.connector.einsteinai.internal.modelsapi.helpers.ConstantUtil.AI_PLATFORM_MODELS_CONNECTED_APP;
+import static com.mulesoft.connector.einsteinai.internal.modelsapi.helpers.ConstantUtil.*;
 
 public class RequestHelper {
 
@@ -92,7 +81,6 @@ public class RequestHelper {
                            ResponseHelper::createEinsteinFormattedResponse);
   }
 
-
   public void generateChatFromMessages(String messages, ParamsModelDetails paramDetails,
                                        ReadTimeoutParams readTimeout,
                                        CompletionCallback<InputStream, ResponseParameters> callback) {
@@ -113,6 +101,24 @@ public class RequestHelper {
     executeEinsteinRequest(payloadStream, paramDetails.getModelApiName(), HTTP_METHOD_POST, URI_MODELS_API_EMBEDDINGS,
                            readTimeout, callback,
                            ResponseHelper::createEinsteinEmbeddingResponse);
+  }
+
+  public void executePromptTemplateGenerations(Map<String, WrappedValue> promptInputParams, String promptTemplateDevName,
+                                               PromptParamsDetails paramPromptDetails,
+                                               EinsteinLlmAdditionalConfigInputRepresentation additionalConfigInputRepresentation,
+                                               ReadTimeoutParams readTimeout,
+                                               CompletionCallback<InputStream, EinsteinPromptTemplateGenerationsResponseAttributes> callback) {
+
+    String payload =
+        constructPayloadForPromptTemplate(promptInputParams, paramPromptDetails, additionalConfigInputRepresentation);
+    log.debug("Einstein Request Body: {}", payload);
+    InputStreamHttpEntity payloadStream = new InputStreamHttpEntity(new ByteArrayInputStream(payload.getBytes()));
+
+    executeEinsteinSalesforceRequest(payloadStream, HTTP_METHOD_POST,
+                                     URI_PROMPT_TEMPLATE + promptTemplateDevName + URI_MODELS_API_GENERATIONS, readTimeout,
+                                     einsteinConnection.getApiVersion(),
+                                     callback,
+                                     ResponseHelper::createEinsteinPromptTemplateGenerationsResponse);
   }
 
   private <A> void executeEinsteinRequest(InputStreamHttpEntity payload, String modelApiName, String httpMethod,
@@ -139,6 +145,34 @@ public class RequestHelper {
 
     completableFuture
         .whenComplete((response, exception) -> handleHttpResponse(response, exception, EinsteinErrorType.MODELS_API_ERROR,
+                                                                  callback, responseConverter));
+  }
+
+  private <A> void executeEinsteinSalesforceRequest(InputStreamHttpEntity payload, String httpMethod, String uriEinsteinPath,
+                                                    ReadTimeoutParams readTimeout,
+                                                    String apiVersion,
+                                                    CompletionCallback<InputStream, A> callback,
+                                                    ThrowingFunction<InputStream, Result<InputStream, A>> responseConverter) {
+
+    String urlString = einsteinConnection.getInstanceUrl() + "/services/data/v" + apiVersion + URI_EINSTEIN + uriEinsteinPath;
+    log.debug("Einstein Request URL: {}", urlString);
+
+    HttpRequestOptions httpRequestOptions = HttpRequestOptions.builder()
+        .responseTimeout((int) readTimeout.getReadTimeoutUnit().toMillis(readTimeout.getReadTimeout())).build();
+
+    CompletableFuture<HttpResponse> completableFuture = einsteinConnection.getHttpClient().sendAsync(
+                                                                                                     buildRequest(urlString,
+                                                                                                                  einsteinConnection
+                                                                                                                      .getAccessToken(),
+                                                                                                                  httpMethod,
+                                                                                                                  payload != null
+                                                                                                                      ? payload
+                                                                                                                      : new EmptyHttpEntity()),
+                                                                                                     httpRequestOptions);
+
+    completableFuture
+        .whenComplete((response, exception) -> handleHttpResponse(response, exception,
+                                                                  EinsteinErrorType.PROMPT_TEMPLATE_GENERATIONS,
                                                                   callback, responseConverter));
   }
 
@@ -216,6 +250,52 @@ public class RequestHelper {
     List<String> results = rankAndPrintResults(corpus, similarityScores);
     // Convert results list to a JSONArray
     return new JSONArray(results);
+  }
+
+  public List<String> getPromptTemplates(ReadTimeoutParams readTimeout) throws IOException, TimeoutException {
+    String urlString = einsteinConnection.getInstanceUrl() + "/services/data/v63.0" + URI_EINSTEIN + URI_PROMPT_TEMPLATE;
+    HttpRequestOptions httpRequestOptions = HttpRequestOptions.builder()
+        .responseTimeout((int) readTimeout.getReadTimeoutUnit().toMillis(readTimeout.getReadTimeout())).build();
+    List<String> result = new ArrayList<>();
+    MultiMap<String, String> queryParams = new MultiMap<>();
+    Boolean hasMoreRecords;
+    Integer offset = 0;
+    queryParams.put("isActive", "true");
+    queryParams.put("pageLimit", "50");
+    queryParams.put("offset", offset.toString());
+
+    do {
+      EinsteinPromptRecordCollectionDTO response;
+      HttpResponse httpResponse = this.einsteinConnection.getHttpClient().send(
+                                                                               buildRequest(urlString,
+                                                                                            einsteinConnection
+                                                                                                .getAccessToken(),
+                                                                                            HTTP_METHOD_GET,
+
+                                                                                            new EmptyHttpEntity()),
+                                                                               httpRequestOptions);
+
+      if (httpResponse.getStatusCode() >= HttpURLConnection.HTTP_OK
+          && httpResponse.getStatusCode() < HttpURLConnection.HTTP_MULT_CHOICE) {
+        response = ResponseHelper.promptTemplates(httpResponse.getEntity().getContent());
+        response.getPromptRecords()
+            .stream()
+            .forEach(einsteinPromptRecordDTO -> result
+                .add((String) einsteinPromptRecordDTO.getFields().get("DeveloperName").getValue()));
+        hasMoreRecords = response.isHasMoreRecords();
+        if (hasMoreRecords) {
+          offset += 50;
+          queryParams.replace("offset", offset.toString());
+          log.debug("The request has more records, offset: {}", offset);
+        }
+      } else {
+        String errorMessage = HttpRequestHelper.readErrorStream(httpResponse.getEntity().getContent());
+        log.error("Error in HTTP request. Response code: {}, message: {}", httpResponse.getStatusCode(), errorMessage);
+        break;
+      }
+    } while (hasMoreRecords);
+
+    return result;
   }
 
   private List<String> createCorpusListFromStream(InputStream inputStream, String fileType, String splitOption)
@@ -461,6 +541,21 @@ public class RequestHelper {
     return jsonObject.toString();
   }
 
+  private String constructPayloadForPromptTemplate(Map<String, WrappedValue> promptInputParams,
+                                                   PromptParamsDetails parmaPromptDetails,
+                                                   EinsteinLlmAdditionalConfigInputRepresentation additionalConfigInputRepresentation) {
+    JSONObject root = new JSONObject(parmaPromptDetails);
+    JSONObject valueMap = new JSONObject();
+    JSONObject valueMapInputParams = new JSONObject(promptInputParams);
+    JSONObject additionalConfig = new JSONObject(additionalConfigInputRepresentation);
+
+    root.put("inputParams", valueMap);
+    valueMap.put("valueMap", valueMapInputParams);
+    root.put("additionalConfig", additionalConfig);
+
+    return root.toString();
+  }
+
   private String constructEmbeddingJsonPayload(String text) {
     JSONArray input = new JSONArray();
     input.put(text);
@@ -545,6 +640,17 @@ public class RequestHelper {
         .uri(url)
         .headers(addConnectionHeaders(accessToken))
         .method(httpMethod)
+        .entity(httpEntity)
+        .build();
+  }
+
+  private HttpRequest buildRequest(String url, String accessToken, String httpMethod, MultiMap<String, String> queryParams,
+                                   HttpEntity httpEntity) {
+    return HttpRequest.builder()
+        .uri(url)
+        .headers(addConnectionHeaders(accessToken))
+        .method(httpMethod)
+        .queryParams(queryParams)
         .entity(httpEntity)
         .build();
   }

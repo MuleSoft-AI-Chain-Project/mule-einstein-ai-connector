@@ -114,7 +114,7 @@ public class HttpRequestHelper {
     int statusCode = httpResponse.getStatusCode();
     log.debug("Parsing Http Response, statusCode = {}", statusCode);
 
-    if (statusCode == HttpURLConnection.HTTP_OK) {
+    if (statusCode >= HttpURLConnection.HTTP_OK && statusCode < HttpURLConnection.HTTP_MULT_CHOICE) {
       if (httpResponse.getEntity().getContent() == null) {
         callback.error(new ModuleException(
                                            "Error: No response received from Einstein", einsteinErrorType));
