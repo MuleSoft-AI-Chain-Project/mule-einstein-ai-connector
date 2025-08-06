@@ -13,6 +13,10 @@ import org.mule.runtime.extension.api.runtime.operation.Result;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import static org.apache.commons.io.IOUtils.toInputStream;
 
@@ -57,8 +61,21 @@ public class ResponseHelper {
     EinsteinChatFromMessagesResponseDTO responseDTO =
         objectMapper.readValue(responseStream, EinsteinChatFromMessagesResponseDTO.class);
 
+    // Convert DTOs to API objects to ensure proper precision handling for toxicity scores
+    List<Object> convertedGenerations = responseDTO.getGenerationDetails().getGenerations().stream()
+        .map(dto -> {
+          Map<String, Object> generation = new HashMap<>();
+          generation.put("id", dto.getId());
+          generation.put("role", dto.getRole());
+          generation.put("content", dto.getContent());
+          generation.put("contentQuality", dto.getContentQuality());
+          generation.put("parameters", dto.getParameters());
+          return generation;
+        })
+        .collect(Collectors.toList());
+
     JSONObject jsonObject = new JSONObject();
-    jsonObject.put("generations", responseDTO.getGenerationDetails().getGenerations());
+    jsonObject.put("generations", convertedGenerations);
 
     return Result.<InputStream, ResponseParameters>builder()
         .output(toInputStream(jsonObject.toString(), StandardCharsets.UTF_8))
