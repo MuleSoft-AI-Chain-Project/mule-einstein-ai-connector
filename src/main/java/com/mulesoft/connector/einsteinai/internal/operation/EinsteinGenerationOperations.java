@@ -9,6 +9,7 @@ import com.mulesoft.connector.einsteinai.internal.modelsapi.models.ParamsModelDe
 import com.mulesoft.connector.einsteinai.internal.params.ReadTimeoutParams;
 import org.mule.runtime.extension.api.annotation.Alias;
 import org.mule.runtime.extension.api.annotation.error.Throws;
+import org.mule.runtime.extension.api.annotation.metadata.fixed.InputJsonType;
 import org.mule.runtime.extension.api.annotation.metadata.fixed.OutputJsonType;
 import org.mule.runtime.extension.api.annotation.param.Connection;
 import org.mule.runtime.extension.api.annotation.param.Content;
@@ -88,7 +89,8 @@ public class EinsteinGenerationOperations {
   @Throws(ChatErrorTypeProvider.class)
   @OutputJsonType(schema = "api/response/EinsteinChatFromMessagesResponse.json")
   public void generateChatFromMessages(@Connection EinsteinConnection connection,
-                                       @Content String messages,
+                                       @InputJsonType(
+                                           schema = "api/parameter/EinsteinMessagesParameter.json") @Content String messages,
                                        @ParameterGroup(
                                            name = "Additional properties") ParamsModelDetails paramDetails,
                                        @ParameterGroup(

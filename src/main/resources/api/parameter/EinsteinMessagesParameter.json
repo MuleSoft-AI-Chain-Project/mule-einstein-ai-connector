@@ -1,0 +1,43 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "messages": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "role": { "type": "string" },
+          "content": { "type": "string" }
+        },
+        "required": ["role", "content"]
+      }
+    },
+    "localization": {
+      "type": "object",
+      "properties": {
+        "defaultLocale": { "type": "string" },
+        "inputLocales": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "locale": { "type": "string" },
+              "probability": { "type": "number" }
+            },
+            "required": ["locale"]
+          }
+        },
+        "expectedLocales": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      },
+      "required": ["defaultLocale"]
+    },
+    "tags": {
+      "type": "object"
+    }
+  },
+  "required": ["messages"]
+}
