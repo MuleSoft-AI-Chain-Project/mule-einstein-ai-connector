@@ -6,8 +6,13 @@ import java.util.Objects;
 
 public class ScanToxicity implements Serializable {
 
-  private boolean isDetected;
-  private List<Categories> categories;
+  private final boolean isDetected;
+  private final List<Categories> categories;
+
+  public ScanToxicity(boolean isDetected, List<Categories> categories) {
+    this.isDetected = isDetected;
+    this.categories = categories;
+  }
 
   public boolean getIsDetected() {
     return isDetected;

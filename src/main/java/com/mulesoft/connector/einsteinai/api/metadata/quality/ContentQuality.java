@@ -5,7 +5,11 @@ import java.util.Objects;
 
 public class ContentQuality implements Serializable {
 
-  private ScanToxicity scanToxicity;
+  private final ScanToxicity scanToxicity;
+
+  public ContentQuality(ScanToxicity scanToxicity) {
+    this.scanToxicity = scanToxicity;
+  }
 
   public ScanToxicity getScanToxicity() {
     return scanToxicity;
