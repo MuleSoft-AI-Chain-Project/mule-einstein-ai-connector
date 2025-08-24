@@ -6,7 +6,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.mulesoft.connectors</groupId>
     <artifactId>mule4-einstein-ai-connector</artifactId>
-    <version>1.2.2-SNAPSHOT</version>
+    <version>1.2.1</version>
     <packaging>mule-extension</packaging>
     <name>Einstein AI Connector - Mule 4</name>
     <description>Secure and manage LLM integration via Einstein Trust Layer</description>
