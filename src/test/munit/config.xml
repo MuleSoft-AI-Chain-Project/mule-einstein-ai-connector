@@ -27,7 +27,8 @@
     <ms-einstein-ai:config name="Einstein_Config_TLS" doc:name="Einstein Config With TLS" doc:id="e2310b9c-aa50-406c-85ae-8bfa200c009a" >
         <ms-einstein-ai:oauth-client-credentials-connection connectionTimeout="60000">
             <tls:context >
-                <tls:key-store type="jks" path="${m4-mutual-tls.keyStore}" keyPassword="${m4-mutual-tls.keyStorePassword}" password="${m4-mutual-tls.keyStorePassword}" />
+                <tls:key-store type="${keystore.ks.type}"
+                               path="${m4-mutual-tls.keyStore}.${keystore.ks.type}" keyPassword="${m4-mutual-tls.keyStorePassword}" password="${m4-mutual-tls.keyStorePassword}" />
             </tls:context>
             <ms-einstein-ai:oauth-client-credentials clientId="${config.client-id}" clientSecret="${config.client-secret}" tokenUrl="${config.salesforce-org}" />
         </ms-einstein-ai:oauth-client-credentials-connection>
@@ -36,7 +37,8 @@
     <ms-einstein-ai:config name="Einstein_Config_Error_TLS" doc:name="Einstein Config Error With TLS" doc:id="e2310b9c-aa50-406c-85ae-8bfa200c009a" >
         <ms-einstein-ai:oauth-client-credentials-connection connectionTimeout="60000">
             <tls:context >
-                <tls:key-store type="jks" path="${m4-mutual-tls.keyStore}" keyPassword="${m4-mutual-tls.keyStorePassword}" password="${m4-mutual-tls.keyStorePassword}" />
+                <tls:key-store type="${keystore.ks.type}"
+                               path="${m4-mutual-tls.keyStore}.${keystore.ks.type}" keyPassword="${m4-mutual-tls.keyStorePassword}" password="${m4-mutual-tls.keyStorePassword}" />
             </tls:context>
             <ms-einstein-ai:oauth-client-credentials clientId="testId" clientSecret="testSecret" tokenUrl="${config.salesforce-org}" />
         </ms-einstein-ai:oauth-client-credentials-connection>
