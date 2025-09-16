@@ -11,7 +11,7 @@ http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/fil
 	</http:listener-config>
 	<ms-einstein-ai:config name="Anypoint_Einstein_Config" doc:name="Einstein Config" doc:id="d2475c8d-45b3-4ec2-928b-a0059a27f996" >
 		<ms-einstein-ai:oauth-client-credentials-connection >
-			<ms-einstein-ai:oauth-client-credentials clientId="${config.client-id}" clientSecret="${config.client-secret}" tokenUrl="${config.salesforce-org}" />
+			<ms-einstein-ai:oauth-client-credentials clientId="${config.client-id}" clientSecret="${config.client-secret}" tokenUrl="${config.salesforce-org-url}" />
 		</ms-einstein-ai:oauth-client-credentials-connection>
 	</ms-einstein-ai:config>
 	<file:config name="File_Config" doc:name="File Config" doc:id="e7b0195b-7318-4e73-8d7e-db6d6dcf3c82" >
