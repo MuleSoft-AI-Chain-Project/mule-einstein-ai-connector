@@ -222,6 +222,14 @@
                         <argLine>
                             -javaagent:${settings.localRepository}/org/jacoco/org.jacoco.agent/${jacoco.version}/org.jacoco.agent-${jacoco.version}-runtime.jar=destfile=${session.executionRootDirectory}/target/jacoco-munit.exec
                         </argLine>
+                        <argLine>--add-opens=java.base/java.lang=ALL-UNNAMED</argLine>
+                        <argLine>--add-opens=java.base/java.lang.reflect=ALL-UNNAMED</argLine>
+                        <argLine>--add-opens=java.base/java.util=ALL-UNNAMED</argLine>
+                        <argLine>--add-opens=java.base/java.io=ALL-UNNAMED</argLine>
+                        <argLine>--add-opens=java.base/java.nio=ALL-UNNAMED</argLine>
+                        <argLine>--add-opens=java.base/sun.nio.ch=ALL-UNNAMED</argLine>
+                        <argLine>--add-opens=java.naming/javax.naming=ALL-UNNAMED</argLine>
+                        <argLine>--add-opens=java.naming/javax.naming.spi=ALL-UNNAMED</argLine>
                     </argLines>
                     <sharedLibraries>
                         <sharedLibrary>
