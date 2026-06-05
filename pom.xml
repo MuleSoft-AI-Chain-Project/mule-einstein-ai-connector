@@ -222,15 +222,17 @@
                         <argLine>
                             -javaagent:${settings.localRepository}/org/jacoco/org.jacoco.agent/${jacoco.version}/org.jacoco.agent-${jacoco.version}-runtime.jar=destfile=${session.executionRootDirectory}/target/jacoco-munit.exec
                         </argLine>
-                        <argLine>--add-opens=java.base/java.lang=ALL-UNNAMED</argLine>
-                        <argLine>--add-opens=java.base/java.lang.reflect=ALL-UNNAMED</argLine>
-                        <argLine>--add-opens=java.base/java.util=ALL-UNNAMED</argLine>
-                        <argLine>--add-opens=java.base/java.io=ALL-UNNAMED</argLine>
-                        <argLine>--add-opens=java.base/java.nio=ALL-UNNAMED</argLine>
-                        <argLine>--add-opens=java.base/sun.nio.ch=ALL-UNNAMED</argLine>
-                        <argLine>--add-opens=java.naming/javax.naming=ALL-UNNAMED</argLine>
-                        <argLine>--add-opens=java.naming/javax.naming.spi=ALL-UNNAMED</argLine>
                     </argLines>
+                    <addOpens>
+                        <addOpen>java.base/java.lang</addOpen>
+                        <addOpen>java.base/java.lang.reflect</addOpen>
+                        <addOpen>java.base/java.util</addOpen>
+                        <addOpen>java.base/java.io</addOpen>
+                        <addOpen>java.base/java.nio</addOpen>
+                        <addOpen>java.base/sun.nio.ch</addOpen>
+                        <addOpen>java.naming/javax.naming</addOpen>
+                        <addOpen>java.naming/javax.naming.spi</addOpen>
+                    </addOpens>
                     <sharedLibraries>
                         <sharedLibrary>
                             <groupId>org.jsoup</groupId>
