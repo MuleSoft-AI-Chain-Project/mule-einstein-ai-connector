@@ -63,8 +63,8 @@
         <jacoco.version>0.8.13</jacoco.version>
         <tika.version>2.9.4</tika.version>
         <mockito.version>4.11.0</mockito.version>
-        <munit.extensions.maven.plugin.version>1.6.0</munit.extensions.maven.plugin.version>
-        <munit.version>3.6.1</munit.version>
+        <munit.extensions.maven.plugin.version>1.7.0</munit.extensions.maven.plugin.version>
+        <munit.version>3.7.0</munit.version>
         <maven.surefire.version>3.5.3</maven.surefire.version>
         <runtimeProduct>MULE_EE</runtimeProduct>
     </properties>
@@ -222,14 +222,6 @@
                         <argLine>
                             -javaagent:${settings.localRepository}/org/jacoco/org.jacoco.agent/${jacoco.version}/org.jacoco.agent-${jacoco.version}-runtime.jar=destfile=${session.executionRootDirectory}/target/jacoco-munit.exec
                         </argLine>
-                        <argLine>--add-opens=java.base/java.lang=ALL-UNNAMED</argLine>
-                        <argLine>--add-opens=java.base/java.lang.reflect=ALL-UNNAMED</argLine>
-                        <argLine>--add-opens=java.base/java.util=ALL-UNNAMED</argLine>
-                        <argLine>--add-opens=java.base/java.io=ALL-UNNAMED</argLine>
-                        <argLine>--add-opens=java.base/java.nio=ALL-UNNAMED</argLine>
-                        <argLine>--add-opens=java.base/sun.nio.ch=ALL-UNNAMED</argLine>
-                        <argLine>--add-opens=java.naming/javax.naming=ALL-UNNAMED</argLine>
-                        <argLine>--add-opens=java.naming/javax.naming.spi=ALL-UNNAMED</argLine>
                     </argLines>
                     <sharedLibraries>
                         <sharedLibrary>
