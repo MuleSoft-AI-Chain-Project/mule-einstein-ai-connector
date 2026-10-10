@@ -13,10 +13,10 @@
 
     <munit:config name="GenerationsOperationTestCase.xml"/>
 
-    <!-- Live Einstein calls of the positive tests. The gatekeeper quota of the shared test tenant
-         is per connected-app feature, so generation calls spend the same per-minute budget as
-         embedding calls. Each positive test therefore runs its call through
-         einstein-call-with-rate-limit-retry (rate-limit-helpers.xml); the error tests below call
+    <!-- Live Einstein calls of the positive tests. The gatekeeper quota that the embedding tests
+         exhaust is keyed per endpoint (embeddings), so generation calls are not throttled today;
+         they run through einstein-call-with-rate-limit-retry (rate-limit-helpers.xml) anyway, so a
+         generations quota on the shared tenant cannot fail them either. The error tests below call
          the operations directly so their expected error types are unchanged.
          Because the live-call flows are reached only through a dynamic flow-ref, which MUnit's
          lazy initialization does not follow, each test lists its flow in munit:enable-flow-sources. -->
