@@ -13,16 +13,61 @@
 
     <munit:config name="GenerationsOperationTestCase.xml"/>
 
+    <!-- Live Einstein calls of the positive tests. The gatekeeper quota of the shared test tenant
+         is per connected-app feature, so generation calls spend the same per-minute budget as
+         embedding calls. Each positive test therefore runs its call through
+         einstein-call-with-rate-limit-retry (rate-limit-helpers.xml); the error tests below call
+         the operations directly so their expected error types are unchanged.
+         Because the live-call flows are reached only through a dynamic flow-ref, which MUnit's
+         lazy initialization does not follow, each test lists its flow in munit:enable-flow-sources. -->
+    <flow name="chat-with-prompt-live-call">
+        <ms-einstein-ai:chat-answer-prompt doc:name="Chat answer prompt" doc:id="5f8c7c79-dffe-4331-a5b4-30375baa66bc"
+                                        config-ref="Einstein_Config" readTimeout="60" readTimeoutUnit="SECONDS">
+            <ms-einstein-ai:prompt>#[payload.prompt]</ms-einstein-ai:prompt>
+        </ms-einstein-ai:chat-answer-prompt>
+    </flow>
+
+    <flow name="chat-generate-from-messages-live-call">
+        <ms-einstein-ai:chat-generate-from-messages doc:name="Chat generate from messages"
+                                                 doc:id="5f8c7c79-dffe-4331-a5b4-30375baa66bc"
+                                                 config-ref="Einstein_Config" readTimeout="60" readTimeoutUnit="SECONDS">
+            <ms-einstein-ai:messages>#[write(payload.messages, 'application/json')]</ms-einstein-ai:messages>
+        </ms-einstein-ai:chat-generate-from-messages>
+    </flow>
+
+    <flow name="agent-define-prompt-template-live-call">
+        <ms-einstein-ai:agent-define-prompt-template doc:name="agent define prompt template"
+                                                  config-ref="Einstein_Config" readTimeout="60" readTimeoutUnit="SECONDS">
+            <ms-einstein-ai:template>
+                #[payload.template]
+            </ms-einstein-ai:template>
+            <ms-einstein-ai:instructions>
+                #[payload.instructions]
+            </ms-einstein-ai:instructions>
+            <ms-einstein-ai:dataset>
+                #[payload.dataset]
+            </ms-einstein-ai:dataset>
+        </ms-einstein-ai:agent-define-prompt-template>
+    </flow>
+
+    <flow name="chat-with-prompt-with-tls-live-call">
+        <ms-einstein-ai:chat-answer-prompt doc:name="Chat answer prompt" doc:id="5f8c7c79-dffe-4331-a5b4-30375baa66bc"
+                                           config-ref="Einstein_Config_TLS" readTimeout="60" readTimeoutUnit="SECONDS">
+            <ms-einstein-ai:prompt>#[payload.prompt]</ms-einstein-ai:prompt>
+        </ms-einstein-ai:chat-answer-prompt>
+    </flow>
+
     <munit:test name="ChatWithPrompt">
+        <munit:enable-flow-sources>
+            <munit:enable-flow-source value="chat-with-prompt-live-call"/>
+        </munit:enable-flow-sources>
         <munit:execution>
             <logger message="Test ChatWithPrompt started" level="INFO"/>
             <munit:set-event doc:name="Set Event" doc:id="1c45d3f8-1234-5678-9abc-01234def6789">
                 <munit:payload value='#[{"prompt": "How many continents are there in the world, give answer in one word only ?"}]'/>
             </munit:set-event>
-            <ms-einstein-ai:chat-answer-prompt doc:name="Chat answer prompt" doc:id="5f8c7c79-dffe-4331-a5b4-30375baa66bc"
-                                            config-ref="Einstein_Config" readTimeout="60" readTimeoutUnit="SECONDS">
-                <ms-einstein-ai:prompt>#[payload.prompt]</ms-einstein-ai:prompt>
-            </ms-einstein-ai:chat-answer-prompt>
+            <set-variable variableName="rateLimitedFlow" value="chat-with-prompt-live-call"/>
+            <flow-ref name="einstein-call-with-rate-limit-retry"/>
         </munit:execution>
         <munit:validation>
             <munit-tools:assert-that expression="#[payload.response]"
@@ -33,17 +78,17 @@
 
 
     <munit:test name="ChatGenerateFromMessages">
+        <munit:enable-flow-sources>
+            <munit:enable-flow-source value="chat-generate-from-messages-live-call"/>
+        </munit:enable-flow-sources>
         <munit:execution>
             <logger message="Test ChatGenerateFromMessages started" level="INFO"/>
             <munit:set-event doc:name="Set Event" doc:id="1c45d3f8-1234-5678-9abc-01234def6789">
                 <munit:payload
                         value="#[{messages:[{role: 'user', content: 'Can you give me a recipe for classic cherry pie?'}]}]"/>
             </munit:set-event>
-            <ms-einstein-ai:chat-generate-from-messages doc:name="Chat generate from messages"
-                                                     doc:id="5f8c7c79-dffe-4331-a5b4-30375baa66bc"
-                                                     config-ref="Einstein_Config" readTimeout="60" readTimeoutUnit="SECONDS">
-                <ms-einstein-ai:messages>#[write(payload.messages, 'application/json')]</ms-einstein-ai:messages>
-            </ms-einstein-ai:chat-generate-from-messages>
+            <set-variable variableName="rateLimitedFlow" value="chat-generate-from-messages-live-call"/>
+            <flow-ref name="einstein-call-with-rate-limit-retry"/>
         </munit:execution>
         <munit:validation>
             <munit-tools:assert-that
@@ -54,6 +99,9 @@
     </munit:test>
 
     <munit:test name="AgentDefinePromptTemplate" description="Test define agent prompt template">
+        <munit:enable-flow-sources>
+            <munit:enable-flow-source value="agent-define-prompt-template-live-call"/>
+        </munit:enable-flow-sources>
         <munit:behavior>
             <munit:set-event doc:name="Set Input" doc:id="01b3a666-0856-440c-a499-c1374896a95b">
                 <munit:payload value="#[output application/json --- {
@@ -65,18 +113,8 @@
         </munit:behavior>
         <munit:execution>
             <logger message="Test AgentDefinePromptTemplate started" level="INFO"/>
-            <ms-einstein-ai:agent-define-prompt-template doc:name="agent define prompt template"
-                                                      config-ref="Einstein_Config" readTimeout="60" readTimeoutUnit="SECONDS">
-                <ms-einstein-ai:template>
-                    #[payload.template]
-                </ms-einstein-ai:template>
-                <ms-einstein-ai:instructions>
-                    #[payload.instructions]
-                </ms-einstein-ai:instructions>
-                <ms-einstein-ai:dataset>
-                    #[payload.dataset]
-                </ms-einstein-ai:dataset>
-            </ms-einstein-ai:agent-define-prompt-template>
+            <set-variable variableName="rateLimitedFlow" value="agent-define-prompt-template-live-call"/>
+            <flow-ref name="einstein-call-with-rate-limit-retry"/>
         </munit:execution>
         <munit:validation>
             <munit-tools:assert-that
@@ -87,15 +125,16 @@
     </munit:test>
 
     <munit:test name="ChatWithPromptWithTLS">
+        <munit:enable-flow-sources>
+            <munit:enable-flow-source value="chat-with-prompt-with-tls-live-call"/>
+        </munit:enable-flow-sources>
         <munit:execution>
             <logger message="Test ChatWithPrompt started" level="INFO"/>
             <munit:set-event doc:name="Set Event" doc:id="1c45d3f8-1234-5678-9abc-01234def6789">
                 <munit:payload value='#[{"prompt": "How many continents are there in the world, give answer in one word only ?"}]'/>
             </munit:set-event>
-            <ms-einstein-ai:chat-answer-prompt doc:name="Chat answer prompt" doc:id="5f8c7c79-dffe-4331-a5b4-30375baa66bc"
-                                               config-ref="Einstein_Config_TLS" readTimeout="60" readTimeoutUnit="SECONDS">
-                <ms-einstein-ai:prompt>#[payload.prompt]</ms-einstein-ai:prompt>
-            </ms-einstein-ai:chat-answer-prompt>
+            <set-variable variableName="rateLimitedFlow" value="chat-with-prompt-with-tls-live-call"/>
+            <flow-ref name="einstein-call-with-rate-limit-retry"/>
         </munit:execution>
         <munit:validation>
             <munit-tools:assert-that expression="#[payload.response]"

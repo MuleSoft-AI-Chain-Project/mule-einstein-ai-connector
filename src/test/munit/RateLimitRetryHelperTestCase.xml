@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Deterministic tests for einstein-call-with-rate-limit-retry (rate-limit-helpers.xml).
+    No live Einstein call is made: the target flow simulates the connector's HTTP errors, and
+    the retry delay is set to a few milliseconds.
+-->
+<mule xmlns="http://www.mulesoft.org/schema/mule/core"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+      xmlns:munit="http://www.mulesoft.org/schema/mule/munit"
+      xmlns:munit-tools="http://www.mulesoft.org/schema/mule/munit-tools"
+      xsi:schemaLocation="
+        http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+        http://www.mulesoft.org/schema/mule/munit http://www.mulesoft.org/schema/mule/munit/current/mule-munit.xsd
+        http://www.mulesoft.org/schema/mule/munit-tools http://www.mulesoft.org/schema/mule/munit-tools/current/mule-munit-tools.xsd">
+
+    <munit:config name="RateLimitRetryHelperTestCase.xml"/>
+
+    <!-- Stands in for a live Einstein operation call. It fails with vars.simulatedErrorDescription
+         on the first vars.simulatedFailures attempts and succeeds afterwards, echoing the payload
+         it received so tests can check that the original input is replayed on every attempt. -->
+    <flow name="simulated-einstein-call">
+        <logger level="INFO" doc:name="Simulated Einstein call"
+                message="#['Simulated Einstein call, attempt ' ++ vars.rateLimitAttempt]"/>
+        <choice>
+            <when expression="#[vars.rateLimitAttempt &lt;= vars.simulatedFailures]">
+                <raise-error type="EINSTEIN-TEST:SIMULATED_HTTP_FAILURE" description="#[vars.simulatedErrorDescription]"/>
+            </when>
+        </choice>
+        <set-payload value='#[output application/json --- {result: ["simulated success"], echoedInput: payload}]'/>
+    </flow>
+
+    <munit:test name="RateLimitHelperRetriesThrottledCallUntilItSucceeds"
+                description="A synchronous-operation 429 is retried and the successful attempt's result is returned">
+        <!-- The stub is only reached through the helper's dynamic flow-ref, which MUnit's lazy
+             initialization does not follow, so it has to be initialized explicitly. -->
+        <munit:enable-flow-sources>
+            <munit:enable-flow-source value="simulated-einstein-call"/>
+        </munit:enable-flow-sources>
+        <munit:execution>
+            <set-payload value="original input"/>
+            <set-variable variableName="rateLimitedFlow" value="simulated-einstein-call"/>
+            <set-variable variableName="rateLimitMaxRetries" value="#[3]"/>
+            <set-variable variableName="rateLimitRetryDelayMillis" value="#[5]"/>
+            <set-variable variableName="simulatedFailures" value="#[2]"/>
+            <set-variable variableName="simulatedErrorDescription"
+                          value='#["Error in HTTP request. ErrorCode: 429 , ErrorMessage: {\"errorCode\":\"LLM_GATEKEEPER\",\"messageCode\":\"E90000\",\"message\":\"You have exceeded your rate limit. Please try again later. {limit=5, remaining=0, reset=54}\"}"]'/>
+            <flow-ref name="einstein-call-with-rate-limit-retry"/>
+        </munit:execution>
+        <munit:validation>
+            <munit-tools:verify-call processor="mule:logger" times="3">
+                <munit-tools:with-attributes>
+                    <munit-tools:with-attribute attributeName="doc:name" whereValue="Simulated Einstein call"/>
+                </munit-tools:with-attributes>
+            </munit-tools:verify-call>
+            <munit-tools:assert-that expression="#[payload.result[0]]" is="#[MunitTools::equalTo('simulated success')]"/>
+            <munit-tools:assert-that expression="#[payload.echoedInput]" is="#[MunitTools::equalTo('original input')]"/>
+        </munit:validation>
+    </munit:test>
+
+    <munit:test name="RateLimitHelperDoesNotRetryOtherErrors"
+                description="A non-429 error fails on the first attempt and keeps its original error type">
+        <!-- The stub is only reached through the helper's dynamic flow-ref, which MUnit's lazy
+             initialization does not follow, so it has to be initialized explicitly. -->
+        <munit:enable-flow-sources>
+            <munit:enable-flow-source value="simulated-einstein-call"/>
+        </munit:enable-flow-sources>
+        <munit:execution>
+            <set-variable variableName="rateLimitedFlow" value="simulated-einstein-call"/>
+            <set-variable variableName="rateLimitMaxRetries" value="#[3]"/>
+            <set-variable variableName="rateLimitRetryDelayMillis" value="#[5]"/>
+            <set-variable variableName="simulatedFailures" value="#[99]"/>
+            <set-variable variableName="simulatedErrorDescription"
+                          value='#["Error in HTTP request. ErrorCode: 500 , ErrorMessage: {\"errorCode\":\"INTERNAL_ERROR\"}"]'/>
+            <try>
+                <flow-ref name="einstein-call-with-rate-limit-retry"/>
+                <error-handler>
+                    <on-error-continue type="EINSTEIN-TEST:SIMULATED_HTTP_FAILURE">
+                        <set-variable variableName="caughtErrorType"
+                                      value="#[error.errorType.namespace ++ ':' ++ error.errorType.identifier]"/>
+                        <set-variable variableName="caughtErrorDescription" value="#[error.description]"/>
+                    </on-error-continue>
+                </error-handler>
+            </try>
+        </munit:execution>
+        <munit:validation>
+            <munit-tools:verify-call processor="mule:logger" times="1">
+                <munit-tools:with-attributes>
+                    <munit-tools:with-attribute attributeName="doc:name" whereValue="Simulated Einstein call"/>
+                </munit-tools:with-attributes>
+            </munit-tools:verify-call>
+            <munit-tools:assert-that expression="#[vars.caughtErrorType]"
+                                     is="#[MunitTools::equalTo('EINSTEIN-TEST:SIMULATED_HTTP_FAILURE')]"/>
+            <munit-tools:assert-that expression="#[vars.caughtErrorDescription]"
+                                     is="#[MunitTools::containsString('ErrorCode: 500')]"/>
+        </munit:validation>
+    </munit:test>
+
+    <munit:test name="RateLimitHelperGivesUpAfterMaxRetries"
+                description="A tenant that stays throttled fails after maxRetries + 1 attempts with the 429 cause">
+        <!-- The stub is only reached through the helper's dynamic flow-ref, which MUnit's lazy
+             initialization does not follow, so it has to be initialized explicitly. -->
+        <munit:enable-flow-sources>
+            <munit:enable-flow-source value="simulated-einstein-call"/>
+        </munit:enable-flow-sources>
+        <munit:execution>
+            <set-variable variableName="rateLimitedFlow" value="simulated-einstein-call"/>
+            <set-variable variableName="rateLimitMaxRetries" value="#[2]"/>
+            <set-variable variableName="rateLimitRetryDelayMillis" value="#[5]"/>
+            <set-variable variableName="simulatedFailures" value="#[99]"/>
+            <!-- Asynchronous operations report the status without the space before the comma. -->
+            <set-variable variableName="simulatedErrorDescription"
+                          value='#["Error in HTTP request. ErrorCode: 429, ErrorMessage: {\"errorCode\":\"LLM_GATEKEEPER\",\"messageCode\":\"E90000\"}"]'/>
+            <try>
+                <flow-ref name="einstein-call-with-rate-limit-retry"/>
+                <error-handler>
+                    <on-error-continue type="EINSTEIN-TEST:SIMULATED_HTTP_FAILURE">
+                        <set-variable variableName="caughtErrorType"
+                                      value="#[error.errorType.namespace ++ ':' ++ error.errorType.identifier]"/>
+                        <set-variable variableName="caughtErrorDescription" value="#[error.description]"/>
+                    </on-error-continue>
+                </error-handler>
+            </try>
+        </munit:execution>
+        <munit:validation>
+            <munit-tools:verify-call processor="mule:logger" times="3">
+                <munit-tools:with-attributes>
+                    <munit-tools:with-attribute attributeName="doc:name" whereValue="Simulated Einstein call"/>
+                </munit-tools:with-attributes>
+            </munit-tools:verify-call>
+            <munit-tools:assert-that expression="#[vars.caughtErrorType]"
+                                     is="#[MunitTools::equalTo('EINSTEIN-TEST:SIMULATED_HTTP_FAILURE')]"/>
+            <munit-tools:assert-that expression="#[vars.caughtErrorDescription]"
+                                     is="#[MunitTools::containsString('LLM_GATEKEEPER')]"/>
+        </munit:validation>
+    </munit:test>
+
+</mule>

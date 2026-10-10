@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Shared helper for MUnit tests that call the live Einstein Models API.
+
+    The shared test tenant is throttled by LLM Gatekeeper to a few embedding requests per
+    minute (HTTP 429, errorCode LLM_GATEKEEPER), and every SFCI lane (runtime versions, FIPS)
+    spends the same per-minute budget. A positive test that only failed because the quota
+    window was exhausted is a false negative, so this helper retries such calls after the
+    window resets. Any other error is propagated unchanged on the first attempt, so real
+    regressions (auth failures, other HTTP errors, wrong responses) still fail the test.
+
+    Contract (caller sets these variables, then flow-refs "einstein-call-with-rate-limit-retry"):
+      vars.rateLimitedFlow            name of the flow that performs the live operation call.
+                                      It receives the caller's payload and must leave the
+                                      operation result in the payload.
+      vars.rateLimitMaxRetries        optional; defaults to ${einstein.ratelimit.maxRetries}.
+      vars.rateLimitRetryDelayMillis  optional; defaults to ${einstein.ratelimit.retryDelayMillis}.
+
+    After the call the payload holds the result of the successful attempt. Attributes of the
+    operation result are not preserved.
+
+    Upper bound per call: (maxRetries + 1) attempts and maxRetries waits of at most
+    retryDelayMillis each. With the defaults (3 retries, 60 s) one throttled call can add at
+    most 3 minutes. When the gatekeeper reports the remaining window ("reset=<seconds>"), the
+    helper waits only that long (plus a 2 s margin), capped at retryDelayMillis.
+
+    Both defaults can be overridden with system properties, e.g.
+    -Deinstein.ratelimit.maxRetries=5 -Deinstein.ratelimit.retryDelayMillis=65000
+-->
+<mule xmlns="http://www.mulesoft.org/schema/mule/core"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xmlns:munit-tools="http://www.mulesoft.org/schema/mule/munit-tools"
+      xsi:schemaLocation="
+        http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+        http://www.mulesoft.org/schema/mule/munit-tools http://www.mulesoft.org/schema/mule/munit-tools/current/mule-munit-tools.xsd">
+
+    <global-property name="einstein.ratelimit.maxRetries" value="3"/>
+    <!-- The gatekeeper window is one minute, so a full-window wait always clears it. -->
+    <global-property name="einstein.ratelimit.retryDelayMillis" value="60000"/>
+
+    <sub-flow name="einstein-call-with-rate-limit-retry">
+        <set-variable variableName="rateLimitInput" value="#[payload]"/>
+        <set-variable variableName="rateLimitMaxRetriesResolved"
+                      value="#[(vars.rateLimitMaxRetries default p('einstein.ratelimit.maxRetries')) as Number]"/>
+        <set-variable variableName="rateLimitSucceeded" value="#[false]"/>
+        <!-- One iteration per allowed attempt; iterations after the first success are skipped.
+             foreach (rather than until-successful) is used so that non-429 errors propagate
+             with their original error type instead of being retried or wrapped in
+             MULE:RETRY_EXHAUSTED. -->
+        <foreach collection="#[(1 to (vars.rateLimitMaxRetriesResolved + 1)) as Array]"
+                 counterVariableName="rateLimitAttempt">
+            <choice>
+                <when expression="#[not vars.rateLimitSucceeded]">
+                    <try>
+                        <!-- Replay the caller's original payload on every attempt. -->
+                        <set-payload value="#[vars.rateLimitInput]"/>
+                        <flow-ref name="#[vars.rateLimitedFlow]"/>
+                        <set-variable variableName="rateLimitResult" value="#[payload]"/>
+                        <set-variable variableName="rateLimitSucceeded" value="#[true]"/>
+                        <error-handler>
+                            <!-- Not a throttling error: fail right away with the original error.
+                                 The connector reports throttling as "Error in HTTP request.
+                                 ErrorCode: 429 , ErrorMessage: {...LLM_GATEKEEPER...}" (synchronous
+                                 operations) or "ErrorCode: 429, ..." (asynchronous operations); in
+                                 both cases it is the error description, because it is the message
+                                 of the root MuleException. -->
+                            <on-error-propagate when="#[%dw 2.0
+var text = (error.description default '') ++ ' ' ++ (error.detailedDescription default '')
+---
+not ((text contains /ErrorCode:\s*429\b/) or (text contains 'LLM_GATEKEEPER'))]"/>
+                            <on-error-continue when="#[vars.rateLimitAttempt &lt;= vars.rateLimitMaxRetriesResolved]">
+                                <set-variable variableName="rateLimitDelayMillis" value="#[%dw 2.0
+var configuredDelay = (vars.rateLimitRetryDelayMillis default p('einstein.ratelimit.retryDelayMillis')) as Number
+var resetSeconds = ((error.description default '') scan /reset=(\d+)/)
+---
+if (isEmpty(resetSeconds)) configuredDelay
+else min([((resetSeconds[0][1] as Number) + 2) * 1000, configuredDelay])]"/>
+                                <logger level="WARN"
+                                        message="#['Einstein rate limit hit (HTTP 429 / LLM_GATEKEEPER) calling flow ' ++ vars.rateLimitedFlow ++ ' on attempt ' ++ vars.rateLimitAttempt ++ ' of ' ++ (vars.rateLimitMaxRetriesResolved + 1) ++ '; retrying in ' ++ vars.rateLimitDelayMillis ++ ' ms']"/>
+                                <munit-tools:sleep time="#[vars.rateLimitDelayMillis]" timeUnit="MILLISECONDS"/>
+                            </on-error-continue>
+                            <on-error-propagate>
+                                <logger level="ERROR"
+                                        message="#['Einstein rate limit (HTTP 429 / LLM_GATEKEEPER) still exceeded calling flow ' ++ vars.rateLimitedFlow ++ ' after ' ++ vars.rateLimitMaxRetriesResolved ++ ' retries: ' ++ (error.description default '')]"/>
+                            </on-error-propagate>
+                        </error-handler>
+                    </try>
+                </when>
+            </choice>
+        </foreach>
+        <set-payload value="#[vars.rateLimitResult]"/>
+    </sub-flow>
+
+</mule>
